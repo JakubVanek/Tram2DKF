@@ -1,0 +1,7 @@
+name = "Tram2DKF"
+uuid = "32cd5d51-e88c-4eff-9d1b-565e2e4b205b"
+authors = ["Jakub Vaněk <vanekj19@fel.cvut.cz>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.10"
