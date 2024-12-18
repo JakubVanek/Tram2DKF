@@ -3,6 +3,7 @@ module Tram2DKF
 # Write your package code here.
 
 include("models.jl")
+include("filters.jl")
 
 export DiscreteTime, ContinuousTime
 export StateEquation, MeasurementEquation
