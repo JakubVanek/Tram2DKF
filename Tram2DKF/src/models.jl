@@ -5,12 +5,13 @@ abstract type DiscreteTime <: Time end
 abstract type ContinuousTime <: Time end
 
 abstract type StateEquation{T <: Time} end
-# (fn)(x,u,t)
+# (fn)(x,u)
 # ninputs(fn)
 # nstates(fn)
+# dependence on time can be modelled as an additional state
 
-abstract type MeasurementEquation{T <: Time} end
-# (fn)(x,u,t)
+abstract type MeasurementEquation end
+# (fn)(x,u)
 # ninputs(fn)
 # nstates(fn)
 # noutputs(fn)
@@ -25,41 +26,41 @@ struct LTIStateEquation{T <: Time} <: StateEquation{T}
         new{T}(A, B)
     end
 end
-(model::LTIStateEquation)(x,u,t) = ninputs(model) == 0 ? model.A*x : model.A*x + model.B*u
+(model::LTIStateEquation)(x,u) = ninputs(model) == 0 ? model.A*x : model.A*x + model.B*u
 nstates(model::LTIStateEquation) = size(model.B, 1)
 ninputs(model::LTIStateEquation) = size(model.B, 2)
 
 
 
 
-struct LTIMeasurementEquation{T <: Time} <: MeasurementEquation{T}
+struct LTIMeasurementEquation <: MeasurementEquation
     C::AbstractMatrix{Float64}
     D::AbstractMatrix{Float64}
-    function LTIMeasurementEquation{T}(C, D) where {T <: Time}
+    function LTIMeasurementEquation(C, D)
         size(C, 1) == 0          && error("Matrix C must have at least one row")
         size(C, 1) != size(D, 1) && error("Matrix D must be as tall as matrix C is")
-        new{T}(C, D)
+        new(C, D)
     end
 end
-(model::LTIMeasurementEquation)(x,u,t) = ninputs(model) == 0 ? model.C*x : model.C*x + model.D*u
+(model::LTIMeasurementEquation)(x,u) = ninputs(model) == 0 ? model.C*x : model.C*x + model.D*u
 noutputs(model::LTIMeasurementEquation) = size(model.C, 1)
 nstates(model::LTIMeasurementEquation)  = size(model.C, 2)
 ninputs(model::LTIMeasurementEquation) = size(model.D, 2)
 
 
 abstract type DiscretizationAlgorithm end
-# (algo)(model,x,u,t,dt)
+# (algo)(model,x,u,dt)
 
 struct Euler <: DiscretizationAlgorithm end
-(::Euler)(f,x,u,t,dt) = f(x,u,t)
+(::Euler)(f,x,u,dt) = f(x,u)
 
 struct RK4 <: DiscretizationAlgorithm end
-function (::RK4)(f,x,u,t,dt)
+function (::RK4)(f,x,u,dt)
     # https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
-    k1 = f(x,           u, t)
-    k2 = f(x + k1*dt/2, u, t + dt/2)
-    k3 = f(x + k2*dt/2, u, t + dt/2)
-    k4 = f(x + k3*dt,   u, t + dt)
+    k1 = f(x,           u)
+    k2 = f(x + k1*dt/2, u)
+    k3 = f(x + k2*dt/2, u)
+    k4 = f(x + k3*dt,   u)
     (k1 + 2*k2 + 3*k3 + k4)/6
 end
 
@@ -78,13 +79,11 @@ function discretize(model::StateEquation{ContinuousTime}, method::Discretization
     DiscretizedStateEquation{typeof(model), typeof(method)}(model, method, sampling_time, subsamples)
 end
 
-function (discretizer::DiscretizedStateEquation)(x, u, k)
+function (discretizer::DiscretizedStateEquation)(x, u)
     dt = discretizer.Ts / discretizer.subsamples
     x_now = x
-    t_now = k*discretizer.Ts
     for i = 1:discretizer.subsamples
-        x_now += discretizer.method(discretizer.f, x_now, u, t_now, dt) * dt
-        t_now += dt
+        x_now += discretizer.method(discretizer.f, x_now, u, dt) * dt
     end
 
     x_now
@@ -93,40 +92,18 @@ ninputs(model::DiscretizedStateEquation)  = ninputs(model.f)
 nstates(model::DiscretizedStateEquation)  = nstates(model.f)
 
 
-struct DiscretizedMeasurementEquation{SubmodelT <: MeasurementEquation{ContinuousTime}} <: MeasurementEquation{DiscreteTime}
-    g::SubmodelT
-    Ts::Float64
-end
-
-function discretize(model::MeasurementEquation{ContinuousTime}, sampling_time::Float64)
-    !isfinite(sampling_time) && error("Sampling time has to be a real finite value")
-    sampling_time <= 0.0 && error("Sampling time has to be a positive value")
-
-    DiscretizedMeasurementEquation{typeof(model)}(model, sampling_time)
-end
-
-(discretizer::DiscretizedMeasurementEquation)(x, u, k) = discretizer.g(x, u, k*discretizer.Ts)
-nstates(model::DiscretizedMeasurementEquation)  = nstates(model.g)
-noutputs(model::DiscretizedMeasurementEquation) = noutputs(model.g)
-ninputs(model::DiscretizedMeasurementEquation) = ninputs(model.g)
-
-
-function linearize(f::StateEquation{TimeT}, x, u, t) where {TimeT <: Time}
-    A = jacobian((new_x) -> f(new_x, u, t), x)[1]
-    if ninputs(f) > 0
-        B = jacobian((new_u) -> f(x, new_u, t), x)[1]
-    else
+function linearize(f::StateEquation{TimeT}, x, u) where {TimeT <: Time}
+    A, B = jacobian(f, x, u)
+    if ninputs(f) == 0
         B = zeros(nstates(f), 0)
     end
     LTIStateEquation{TimeT}(A, B)
 end
 
-function linearize(g::MeasurementEquation{TimeT}, x, u, t) where {TimeT <: Time}
-    C = jacobian((new_x) -> g(new_x, u, t), x)[1]
-    if ninputs(g) > 0
-        D = jacobian((new_u) -> g(x, new_u, t), x)[1]
-    else
+function linearize(g::MeasurementEquation, x, u)
+    C, D = jacobian(g, x, u)
+    if ninputs(g) == 0
         D = zeros(noutputs(g), 0)
     end
-    LTIMeasurementEquation{TimeT}(C, D)
+    LTIMeasurementEquation(C, D)
 end

@@ -25,7 +25,7 @@ function backward_step(::LinearKalmanFilter,
 end
 
 function data_step(::LinearKalmanFilter,
-    model::LTIMeasurementEquation{DiscreteTime},
+    model::LTIMeasurementEquation,
     prior::UncertainValue,
     observation::UncertainValue)
     
@@ -57,7 +57,7 @@ function forward_step(::LinearKalmanFilter,
 end
 
 function data_step(::LinearKalmanFilter,
-    model::LTIMeasurementEquation{DiscreteTime},
+    model::LTIMeasurementEquation,
     prior::SqrtGaussian,
     observation::SqrtGaussian)
 

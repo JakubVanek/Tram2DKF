@@ -1,5 +1,5 @@
 DtIntegrator = LTIStateEquation{DiscreteTime}([1.0;;], [1.0;;])
-JustState    = LTIMeasurementEquation{DiscreteTime}([1.0;;], [0.0;;])
+JustState    = LTIMeasurementEquation([1.0;;], [0.0;;])
 LKF          = LinearKalmanFilter()
 
 @testset "LKF time step" begin
