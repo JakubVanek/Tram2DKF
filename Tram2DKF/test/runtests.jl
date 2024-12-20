@@ -7,5 +7,6 @@ using JET
         JET.test_package(Tram2DKF; target_defined_modules = true)
     end
     include("models.jl")
+    include("kf.jl")
 end
 
