@@ -3,10 +3,11 @@ struct LinearKalmanFilter <: KalmanFilter end
 function forward_step(::LinearKalmanFilter,
     model::LTIStateEquation{DiscreteTime},
     prev_state::UncertainValue,
-    input::Vector{Float64},
+    input,
     process_noise::UncertainValue)
 
-    x = model.A * mean(prev_state) + model.B * input + mean(process_noise) # nonstandard, but hopefully OK
+    external_in = !isempty(model.B) ? model.B * input : zeros(nstates(model))
+    x = model.A * mean(prev_state) + external_in + mean(process_noise) # nonstandard, but hopefully OK
     Pxx = model.A * covariance(prev_state) * model.A' + covariance(process_noise)
     Gaussian(x, Pxx)
 end
@@ -27,7 +28,7 @@ end
 function data_step(::LinearKalmanFilter,
     model::LTIMeasurementEquation,
     prior::UncertainValue,
-    input::Vector{Float64},
+    input,
     observation::UncertainValue)
     
     R = covariance(observation)
@@ -36,7 +37,8 @@ function data_step(::LinearKalmanFilter,
     Pyx = Pxy'
     Pyy = model.C * Pxx * model.C' + R
 
-    innovation = mean(observation) - (model.C * mean(prior) + model.D * input)
+    feedthrough = !isempty(model.D) ? model.D * input : zeros(noutputs(model))
+    innovation = mean(observation) - (model.C * mean(prior) + feedthrough)
     new_x = mean(prior) + Pxy * (Pyy \ innovation)
     new_Pxx = Pxx - Pxy * (Pyy \ Pyx)
     Gaussian(new_x, new_Pxx)
@@ -48,10 +50,12 @@ end
 function forward_step(::LinearKalmanFilter,
     model::LTIStateEquation{DiscreteTime},
     prev_state::SqrtGaussian,
-    input::Vector{Float64},
+    input,
     process_noise::SqrtGaussian)
 
-    next_x = model.A * prev_state.x + model.B * input + process_noise.x
+
+    external_in = !isempty(model.B) ? model.B * input : zeros(nstates(model))
+    next_x = model.A * prev_state.x + external_in + process_noise.x
     next_L = lq([process_noise.L  model.A * prev_state.L]).L
 
     SqrtGaussian(next_x, LowerTriangular(next_L))
@@ -60,7 +64,7 @@ end
 function data_step(::LinearKalmanFilter,
     model::LTIMeasurementEquation,
     prior::SqrtGaussian,
-    input::Vector{Float64},
+    input,
     observation::SqrtGaussian)
 
     n = nstates(model)
@@ -76,7 +80,8 @@ function data_step(::LinearKalmanFilter,
     posterior_Lx = joint_cov_L[p+1:p+n, p+1:p+n]
     almost_K = joint_cov_L[p+1:p+n, 1:p]
 
-    innovation = observation.x - (model.C * prior.x + model.D * input)
+    feedthrough = !isempty(model.D) ? model.D * input : zeros(noutputs(model))
+    innovation = observation.x - (model.C * prior.x + feedthrough)
     posterior_x = prior.x + almost_K * (LowerTriangular(posterior_Ly) \ innovation)
 
     SqrtGaussian(posterior_x, LowerTriangular(posterior_Lx))

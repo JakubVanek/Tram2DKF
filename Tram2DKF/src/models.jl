@@ -22,7 +22,7 @@ struct LTIStateEquation{T <: Time} <: StateEquation{T}
     function LTIStateEquation{T}(A, B) where {T <: Time}
         size(A, 1) == 0          && error("Matrix A must have at least one row")
         size(A, 1) != size(A, 2) && error("Matrix A must be rectangular")
-        size(A, 1) != size(B, 1) && error("Matrix B must be as tall as matrix A is")
+        size(A, 1) != size(B, 1) && !isempty(B) && error("Matrix B must be as tall as matrix A is")
         new{T}(A, B)
     end
 end
@@ -38,7 +38,7 @@ struct LTIMeasurementEquation <: MeasurementEquation
     D::AbstractMatrix{Float64}
     function LTIMeasurementEquation(C, D)
         size(C, 1) == 0          && error("Matrix C must have at least one row")
-        size(C, 1) != size(D, 1) && error("Matrix D must be as tall as matrix C is")
+        size(C, 1) != size(D, 1) && !isempty(D) && error("Matrix D must be as tall as matrix C is")
         new(C, D)
     end
 end
