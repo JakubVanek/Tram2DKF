@@ -12,7 +12,7 @@ export LTIStateEquation, LTIMeasurementEquation
 export DiscretizationAlgorithm, RK4, Euler
 export linearize, discretize
 export nstates, ninputs, noutputs
-export Gaussian, SqrtGaussian, mean, covariance
+export Gaussian, SqrtGaussian, mean, covariance, pdf, logpdf
 export KalmanFilter, LinearKalmanFilter
 export forward_step, backward_step, data_step
 
