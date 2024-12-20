@@ -8,5 +8,6 @@ using JET
     end
     include("models.jl")
     include("kf.jl")
+    include("distributions.jl")
 end
 
