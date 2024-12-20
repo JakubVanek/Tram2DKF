@@ -27,6 +27,7 @@ end
 function data_step(::LinearKalmanFilter,
     model::LTIMeasurementEquation,
     prior::UncertainValue,
+    input::Vector{Float64},
     observation::UncertainValue)
     
     R = covariance(observation)
@@ -35,7 +36,7 @@ function data_step(::LinearKalmanFilter,
     Pyx = Pxy'
     Pyy = model.C * Pxx * model.C' + R
 
-    innovation = mean(observation) - model.C * mean(prior)
+    innovation = mean(observation) - (model.C * mean(prior) + model.D * input)
     new_x = mean(prior) + Pxy * (Pyy \ innovation)
     new_Pxx = Pxx - Pxy * (Pyy \ Pyx)
     Gaussian(new_x, new_Pxx)
@@ -59,6 +60,7 @@ end
 function data_step(::LinearKalmanFilter,
     model::LTIMeasurementEquation,
     prior::SqrtGaussian,
+    input::Vector{Float64},
     observation::SqrtGaussian)
 
     n = nstates(model)
@@ -74,7 +76,7 @@ function data_step(::LinearKalmanFilter,
     posterior_Lx = joint_cov_L[p+1:p+n, p+1:p+n]
     almost_K = joint_cov_L[p+1:p+n, 1:p]
 
-    innovation = observation.x - model.C * prior.x
+    innovation = observation.x - (model.C * prior.x + model.D * input)
     posterior_x = prior.x + almost_K * (LowerTriangular(posterior_Ly) \ innovation)
 
     SqrtGaussian(posterior_x, LowerTriangular(posterior_Lx))

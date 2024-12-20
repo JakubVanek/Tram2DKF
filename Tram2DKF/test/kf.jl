@@ -16,7 +16,7 @@ end
 @testset "LKF data step" begin
     prior = Gaussian([0.0], [1.0;;])
     measurement = Gaussian([1.0], [1.0;;])
-    posterior = data_step(LKF, JustState, prior, measurement)
+    posterior = data_step(LKF, JustState, prior, [0.0], measurement)
 
     @test mean(posterior) == [0.5]
     @test covariance(posterior) == [0.5;;]
@@ -38,7 +38,7 @@ end
 @testset "SQRT LKF data step" begin
     prior = SqrtGaussian(Gaussian([0.0], [1.0;;]))
     measurement = SqrtGaussian(Gaussian([1.0], [1.0;;]))
-    posterior = data_step(LKF, JustState, prior, measurement)
+    posterior = data_step(LKF, JustState, prior, [0.0], measurement)
 
     @test typeof(posterior) == SqrtGaussian
     @test mean(posterior) ≈ [0.5]

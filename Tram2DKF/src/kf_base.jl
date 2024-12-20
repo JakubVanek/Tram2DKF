@@ -56,4 +56,4 @@ end
 abstract type KalmanFilter end
 # forward_step(kf::KalmanFilter, model::StateEquation{DiscreteTime}, prev_state::UncertainValue, input::Vector{Float64}, process_noise::UncertainValue) -> new_state::UncertainValue
 # backward_step(kf::KalmanFilter, model::StateEquation{DiscreteTime}, current_posterior::UncertainValue, next_prior::UncertainValue, next_smoothed::UncertainValue) -> current_smoothed::UncertainValue
-# data_step(kf::KalmanFilter, model::StateEquation{DiscreteTime}, prior::UncertainValue, observation::UncertainValue) -> posterior::UncertainValue
+# data_step(kf::KalmanFilter, model::StateEquation{DiscreteTime}, prior::UncertainValue, input::Vector{Float64}, observation::UncertainValue) -> posterior::UncertainValue
