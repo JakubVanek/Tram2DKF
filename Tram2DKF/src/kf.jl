@@ -8,8 +8,7 @@ function forward_step(::LinearKalmanFilter,
 
     external_in = !isempty(model.B) ? model.B * input : zeros(nstates(model))
     x = model.A * mean(prev_state) + external_in + mean(process_noise) # nonstandard, but hopefully OK
-    Pxx = model.A * covariance(prev_state) * model.A' + covariance(process_noise)
-    Gaussian(x, Pxx)
+    direct_forward_step(model, prev_state, x, process_noise)
 end
 
 function backward_step(::LinearKalmanFilter,
@@ -30,46 +29,63 @@ function data_step(::LinearKalmanFilter,
     prior::UncertainValue,
     input,
     observation::UncertainValue)
-    
+
+    feedthrough = !isempty(model.D) ? model.D * input : zeros(noutputs(model))
+    innovation = mean(observation) - (model.C * mean(prior) + feedthrough)
+
+    innovation_data_step(model, prior, innovation, observation)
+end
+
+
+function direct_forward_step(
+    model::LTIStateEquation{DiscreteTime},
+    prev_state::UncertainValue,
+    new_state::Vector{Float64},
+    process_noise::UncertainValue)
+
+    Pxx = model.A * covariance(prev_state) * model.A' + covariance(process_noise)
+    Gaussian(new_state, Pxx)
+end
+
+function direct_forward_step(
+    model::LTIStateEquation{DiscreteTime},
+    prev_state::SqrtGaussian,
+    new_state::Vector{Float64},
+    process_noise::SqrtGaussian)
+
+    # [1] T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
+    next_L = lq([process_noise.L  model.A * prev_state.L]).L
+    SqrtGaussian(new_state, LowerTriangular(next_L))
+end
+
+function innovation_data_step(
+    model::LTIMeasurementEquation,
+    prior::UncertainValue,
+    innovation,
+    observation::UncertainValue)
+
     R = covariance(observation)
     Pxx = covariance(prior)
     Pxy = Pxx * model.C'
     Pyx = Pxy'
     Pyy = model.C * Pxx * model.C' + R
 
-    feedthrough = !isempty(model.D) ? model.D * input : zeros(noutputs(model))
-    innovation = mean(observation) - (model.C * mean(prior) + feedthrough)
     new_x = mean(prior) + Pxy * (Pyy \ innovation)
     new_Pxx = Pxx - Pxy * (Pyy \ Pyx)
     Gaussian(new_x, new_Pxx)
 end
 
 
-# [1] T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
-
-function forward_step(::LinearKalmanFilter,
-    model::LTIStateEquation{DiscreteTime},
-    prev_state::SqrtGaussian,
-    input,
-    process_noise::SqrtGaussian)
-
-
-    external_in = !isempty(model.B) ? model.B * input : zeros(nstates(model))
-    next_x = model.A * prev_state.x + external_in + process_noise.x
-    next_L = lq([process_noise.L  model.A * prev_state.L]).L
-
-    SqrtGaussian(next_x, LowerTriangular(next_L))
-end
-
-function data_step(::LinearKalmanFilter,
+function innovation_data_step(
     model::LTIMeasurementEquation,
     prior::SqrtGaussian,
-    input,
+    innovation,
     observation::SqrtGaussian)
 
     n = nstates(model)
     p = noutputs(model)
 
+    # [1] T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
     joint_cov_M = [
         observation.L   model.C * prior.L;
         zeros(n, p)     prior.L
@@ -80,8 +96,6 @@ function data_step(::LinearKalmanFilter,
     posterior_Lx = joint_cov_L[p+1:p+n, p+1:p+n]
     almost_K = joint_cov_L[p+1:p+n, 1:p]
 
-    feedthrough = !isempty(model.D) ? model.D * input : zeros(noutputs(model))
-    innovation = observation.x - (model.C * prior.x + feedthrough)
     posterior_x = prior.x + almost_K * (LowerTriangular(posterior_Ly) \ innovation)
 
     SqrtGaussian(posterior_x, LowerTriangular(posterior_Lx))
