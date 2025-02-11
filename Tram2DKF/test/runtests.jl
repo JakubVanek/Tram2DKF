@@ -10,5 +10,5 @@ using JET
     include("kf.jl")
     include("distributions.jl")
     include("ekf.jl")
+    include("linesearch.jl")
 end
-
