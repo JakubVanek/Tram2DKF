@@ -15,6 +15,7 @@ end
 function (bls::BacktrackingLineSearch)(V, x0, xstep0)
     V0 = V(x0)
     dV0 = V'(x0)
+    full_step_threshold = -(dV0 ⋅ xstep0) * bls.strictness
 
     multiplier = 1.0
 
@@ -23,7 +24,7 @@ function (bls::BacktrackingLineSearch)(V, x0, xstep0)
         x = x0 + step
 
         obtained_decrease = V0 - V(x)
-        wanted_decrease = -dV0 * norm(step) * bls.strictness
+        wanted_decrease = full_step_threshold * multiplier
 
         if obtained_decrease > wanted_decrease
             return step
