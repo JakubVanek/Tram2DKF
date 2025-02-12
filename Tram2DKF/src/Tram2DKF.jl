@@ -14,7 +14,7 @@ include("track_generator.jl")
 include("track_sensors.jl")
 
 export DiscreteTime, ContinuousTime
-export StateEquation, MeasurementEquation
+export StateEquation, MeasurementEquation, CompositeMeasurement
 export LTIStateEquation, LTIMeasurementEquation
 export DiscretizationAlgorithm, RK4, Euler
 export linearize, discretize

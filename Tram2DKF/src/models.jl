@@ -16,6 +16,14 @@ abstract type MeasurementEquation end
 # nstates(fn)
 # noutputs(fn)
 
+struct CompositeMeasurement <: MeasurementEquation
+    pieces::Vector{<:MeasurementEquation}
+end
+(msr::CompositeMeasurement)(x, u) = reduce(vcat, msr.pieces .|> piece -> piece(x,u))
+ninputs(msr::CompositeMeasurement) = ninputs(msr.pieces[1])
+nstates(msr::CompositeMeasurement) = nstates(msr.pieces[1])
+noutputs(msr::CompositeMeasurement) = sum(msr.pieces .|> noutputs)
+
 struct LTIStateEquation{T <: Time} <: StateEquation{T}
     A::Matrix{Float64}
     B::Matrix{Float64}

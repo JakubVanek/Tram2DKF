@@ -58,3 +58,26 @@ nstates(::Integrator) = 1
     @test dt_model([0], [1]) == [2]
     @test dt_model([0], [2]) == [4]
 end
+
+
+struct MeasA <: MeasurementEquation end
+(::MeasA)(x,u) = x[1]
+ninputs(::MeasA) = 0
+nstates(::MeasA) = 1
+noutputs(::MeasA) = 1
+
+struct MeasB <: MeasurementEquation end
+(::MeasB)(x,u) = x[1]^2
+ninputs(::MeasB) = 0
+nstates(::MeasB) = 1
+noutputs(::MeasB) = 1
+
+@testset "Composite measurement" begin
+    composite = CompositeMeasurement([MeasA(), MeasB()])
+    @test ninputs(composite) == 0
+    @test noutputs(composite) == 2
+    @test nstates(composite) == 1
+    @test composite([0], []) == [0, 0]
+    @test composite([1], []) == [1, 1]
+    @test composite([2], []) == [2, 4]
+end
