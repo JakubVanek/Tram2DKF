@@ -74,12 +74,13 @@ function (::TramMotionModel)(x, u)
 end
 
 
-function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vector{<:TrajectorySegment}, dt::Float64)
-    generating_system = discretize(TramMotionModel(), RK4(), dt)
+function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vector{<:TrajectorySegment}, dt::Float64, subsamples::Int = 1)
+    generating_system = discretize(TramMotionModel(), RK4(), dt / subsamples)
 
     states = Vector{Vector{Float64}}()
     state = zeros(Float64, nstates(generating_system))
     push!(states, state)
+    idx = 1
 
     track = TrackChainer(track_segments, state[IDX_DISTANCE])
     speed_profile = TrajectoryChainer(tram_segments,
@@ -90,6 +91,9 @@ function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vect
     )
 
     while true
+        # write time without accumulated rounding errors
+        state[IDX_TIME] = (idx - 1) * dt / subsamples
+
         geometry = sample(track, state[IDX_DISTANCE])
         drive    = sample(speed_profile,
             state[IDX_TIME],
@@ -109,7 +113,12 @@ function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vect
 
         # simulate system evolution till next keyframe
         state = generating_system(state, [])
-        push!(states, state)
+
+        # save state if needed
+        if mod(idx, subsamples) == 0
+            push!(states, state)
+        end
+        idx += 1
     end
 
     return states

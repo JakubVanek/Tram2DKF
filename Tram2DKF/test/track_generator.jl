@@ -32,4 +32,14 @@
         @test states[250][IDX_SPEED] < 10.0
         @test states[250][IDX_SPEED] > 0.0
     end
+
+    @testset "Subsampling" begin
+        track = [StraightTrack(distance=100.0)]
+        trip = [Stop(duration=1.0)]
+
+        states = render_trip(track, trip, 0.1, 10)
+
+        # instead of 101
+        @test length(states) == 11
+    end
 end
