@@ -13,7 +13,7 @@
             Stop(duration=10.0)
         ]
 
-        states = render_trip(track, trip, 0.01)
+        states = render_trip(track, trip, 0.1)
 
         # initial state
         @test states[1] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

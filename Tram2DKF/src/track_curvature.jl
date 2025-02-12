@@ -14,7 +14,7 @@ struct StraightTrackState <: ActiveTrackSegment
 end
 activate(seg::StraightTrack, pos) = StraightTrackState(seg, pos)
 function curvature(seg::StraightTrackState, pos)::Union{TrackCurvature, Nothing}
-    (pos - seg.from_point) < seg.template.distance && return (curvature = 0.0, dcurvature = 0.0)
+    pos < seg.from_point + seg.template.distance && return (curvature = 0.0, dcurvature = 0.0)
     return nothing
 end
 
@@ -41,7 +41,7 @@ function activate(seg::TrackTurn, pos)::TrackTurnState
     if transition_angles <= abs(seg.angle)
         circular_arc_length = abs(seg.angle - copysign(transition_angles, seg.angle)) / max_curvature
 
-        TrackTurnState(
+        return TrackTurnState(
             copysign(max_curvature, seg.angle),
             pos,
             pos + seg.transition_curve_length,
@@ -52,7 +52,7 @@ function activate(seg::TrackTurn, pos)::TrackTurnState
         transition_curve_length = sqrt(abs(seg.angle) * seg.radius * seg.transition_curve_length)
         max_curvature = seg.angle / transition_curve_length
 
-        TrackTurnState(
+        return TrackTurnState(
             max_curvature,
             pos,
             pos + transition_curve_length,

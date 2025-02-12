@@ -16,11 +16,8 @@ struct StopState <: ActiveTrajectorySegment
 end
 activate(stop::Stop, time, pos, speed, accel) = StopState(stop, time)
 function drive(stop::StopState, time, pos, speed, accel)::Union{TrajectoryDrive, Nothing}
-    if (time - stop.started_at) < stop.template.duration
-        return (speed = 0.0, accel = 0.0);
-    else
-        return nothing
-    end
+    time < stop.started_at + stop.template.duration && return (speed = 0.0, accel = 0.0)
+    return nothing
 end
 
 
@@ -45,12 +42,15 @@ activate(acc::Accelerate, time, pos, speed, accel) = AccelerateState(
     copysign(acc.acceleration, acc.to_speed - speed)
 )
 function drive(acc::AccelerateState, time, pos, speed, accel)::Union{TrajectoryDrive, Nothing}
-    if time < acc.to_time
-        speed = lerp(acc.from_time, acc.from_speed, acc.to_time, acc.to_speed, time)
-        return (speed = speed, accel = acc.acceleration)
-    else
-        return nothing
-    end
+    time < acc.from_time && return (
+        speed = acc.from_speed,
+        accel = 0.0
+    )
+    time < acc.to_time && return (
+        speed = lerp(acc.from_time, acc.from_speed, acc.to_time, acc.to_speed, time),
+        accel = acc.acceleration
+    )
+    return nothing
 end
 
 # TRAM COASTING
@@ -65,9 +65,9 @@ struct ConstantSpeedState <: ActiveTrajectorySegment
 end
 activate(spd::ConstantSpeed, time, pos, speed, accel) = ConstantSpeedState(spd, pos)
 function drive(spd::ConstantSpeedState, time, pos, speed, accel)::Union{TrajectoryDrive, Nothing}
-    if (pos - spd.from_point) < spd.template.distance
-        return (speed = spd.template.speed, accel = 0.0);
-    else
-        return nothing
-    end
+    pos < spd.from_point + spd.template.distance && return (
+        speed = spd.template.speed,
+        accel = 0.0
+    )
+    return nothing
 end
