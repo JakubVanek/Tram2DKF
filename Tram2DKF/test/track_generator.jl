@@ -19,15 +19,15 @@
         @test states[1] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         # acceleration probes
-        @test states[500][6]  == 1.0
-        @test states[1500][6] == 0.0
-        @test states[2500][6] == -1.0
+        @test states[50][6]  == 1.0
+        @test states[150][6] == 0.0
+        @test states[250][6] == -1.0
 
         # speed probes
-        @test states[500][5]  > 0.0
-        @test states[500][5]  < 10.0
-        @test states[1500][5] == 10.0
-        @test states[2500][5] < 10.0
-        @test states[2500][5] > 0.0
+        @test states[50][5]  > 0.0
+        @test states[50][5]  < 10.0
+        @test states[150][5] == 10.0
+        @test states[250][5] < 10.0
+        @test states[250][5] > 0.0
     end
 end
