@@ -10,6 +10,7 @@ include("iekf.jl")
 include("motion_models.jl")
 include("track_speedprofile.jl")
 include("track_curvature.jl")
+include("track_generator.jl")
 
 export DiscreteTime, ContinuousTime
 export StateEquation, MeasurementEquation
@@ -21,5 +22,8 @@ export Gaussian, SqrtGaussian, mean, covariance, pdf, logpdf
 export KalmanFilter, LinearKalmanFilter, ExtendedKalmanFilter, IteratedExtendedKalmanFilter
 export forward_step, backward_step, data_step
 export StepSizeControl, IdentityStepping, BacktrackingLineSearch
+export TrackSegment, StraightTrack, TrackTurn
+export TrajectorySegment, Stop, Accelerate, ConstantSpeed
+export render_trip
 
 end
