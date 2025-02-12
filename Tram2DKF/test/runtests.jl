@@ -16,4 +16,5 @@ using JET
     include("track_speedprofile.jl")
     include("track_curvature.jl")
     include("track_generator.jl")
+    include("track_sensors.jl")
 end

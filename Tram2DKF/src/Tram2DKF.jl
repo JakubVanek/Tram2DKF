@@ -11,6 +11,7 @@ include("motion_models.jl")
 include("track_speedprofile.jl")
 include("track_curvature.jl")
 include("track_generator.jl")
+include("track_sensors.jl")
 
 export DiscreteTime, ContinuousTime
 export StateEquation, MeasurementEquation
@@ -25,5 +26,6 @@ export StepSizeControl, IdentityStepping, BacktrackingLineSearch
 export TrackSegment, StraightTrack, TrackTurn
 export TrajectorySegment, Stop, Accelerate, ConstantSpeed
 export render_trip
+export simulate_accelerometer, simulate_gyro, simulate_gnss, simulate_odometry
 
 end
