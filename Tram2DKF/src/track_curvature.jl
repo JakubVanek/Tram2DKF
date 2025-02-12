@@ -5,7 +5,7 @@ TrackCurvature = @NamedTuple{curvature::Float64, dcurvature::Float64}
 abstract type ActiveTrackSegment end
 # curvature(segment::ActiveTrackSegment, pos)::Union{TrackCurvature, Nothing}
 
-struct StraightTrack <: TrackSegment
+@kwdef struct StraightTrack <: TrackSegment
     distance::Float64
 end
 struct StraightTrackState <: ActiveTrackSegment
@@ -19,10 +19,10 @@ function curvature(seg::StraightTrackState, pos)::Union{TrackCurvature, Nothing}
 end
 
 
-struct TrackTurn <: TrackSegment
+@kwdef struct TrackTurn <: TrackSegment
     angle::Float64
     radius::Float64
-    transition_curve_length::Float64
+    transition_curve_length::Float64 = 0.0
 end
 struct TrackTurnState <: ActiveTrackSegment
     max_curvature::Float64

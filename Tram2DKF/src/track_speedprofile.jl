@@ -7,7 +7,7 @@ abstract type ActiveTrajectorySegment end
 
 # TRAM STOP
 
-struct Stop <: TrajectorySegment
+@kwdef struct Stop <: TrajectorySegment
     duration::Float64
 end
 struct StopState <: ActiveTrajectorySegment
@@ -26,7 +26,7 @@ end
 
 # TRAM ACCELERATION
 
-struct Accelerate <: TrajectorySegment
+@kwdef struct Accelerate <: TrajectorySegment
     to_speed::Float64
     acceleration::Float64
 end
@@ -55,7 +55,7 @@ end
 
 # TRAM COASTING
 
-struct ConstantSpeed <: TrajectorySegment
+@kwdef struct ConstantSpeed <: TrajectorySegment
     speed::Float64
     distance::Float64
 end
