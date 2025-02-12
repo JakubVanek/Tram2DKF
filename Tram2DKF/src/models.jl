@@ -61,7 +61,7 @@ function (::RK4)(f,x,u,dt)
     k2 = f(x + k1*dt/2, u)
     k3 = f(x + k2*dt/2, u)
     k4 = f(x + k3*dt,   u)
-    (k1 + 2*k2 + 3*k3 + k4)/6
+    (k1 + 2*k2 + 2*k3 + k4)/6
 end
 
 struct DiscretizedStateEquation{SubmodelT <: StateEquation{ContinuousTime}, MethodT <: DiscretizationAlgorithm} <: StateEquation{DiscreteTime}
