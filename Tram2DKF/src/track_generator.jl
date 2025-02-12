@@ -55,15 +55,16 @@ function sample(chainer::TrajectoryChainer, t::Float64, s::Float64, v::Float64, 
 end
 
 # state vector layout:
-# x[1] ... travelled time
-# x[2] ... travelled distance
-# x[3] ... X position
-# x[4] ... Y position
-# x[5] ... forward speed
-# x[6] ... forward acceleration
-# x[7] ... track heading
-# x[8] ... track curvature
-# x[9] ... track curvature derivative
+IDX_TIME         = 1 # [s]
+IDX_DISTANCE     = 2 # [m]
+IDX_X_COORD      = 3 # [m]
+IDX_Y_COORD      = 4 # [m]
+IDX_SPEED        = 5 # [m/s]
+IDX_ACCELERATION = 6 # [m/s^2]
+IDX_HEADING      = 7 # [rad]
+IDX_CURVATURE    = 8 # [1/m]
+IDX_DCURVATURE   = 9 # [1/m^2]
+
 struct TramMotionModel <: StateEquation{ContinuousTime} end
 ninputs(::TramMotionModel) = 0
 nstates(::TramMotionModel) = 9
@@ -77,39 +78,38 @@ function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vect
     generating_system = discretize(TramMotionModel(), RK4(), dt)
 
     states = Vector{Vector{Float64}}()
-    push!(states, zeros(nstates(generating_system)))
+    state = zeros(Float64, nstates(generating_system))
+    push!(states, state)
 
-    t = 0.0 # time [s]
-    s = 0.0 # track distance [m]
-    x = 0.0 # X coordinate [m]
-    y = 0.0 # Y coordinate [m]
-    v = 0.0 # forward speed [m/s]
-    a = 0.0 # forward acceleration [m/s^2]
-    φ = 0.0 # heading [rad]
-    c = 0.0 # curvature [1/m]
-    dc = 0.0 # curvature derivative [1/m^2]
-
-    track = TrackChainer(track_segments, s)
-    speed_profile = TrajectoryChainer(tram_segments, t, s, v, a)
+    track = TrackChainer(track_segments, state[IDX_DISTANCE])
+    speed_profile = TrajectoryChainer(tram_segments,
+        state[IDX_TIME],
+        state[IDX_DISTANCE],
+        state[IDX_SPEED],
+        state[IDX_ACCELERATION]
+    )
 
     while true
-        geometry = sample(track, s)
-        drive    = sample(speed_profile, t, s, v, a)
+        geometry = sample(track, state[IDX_DISTANCE])
+        drive    = sample(speed_profile,
+            state[IDX_TIME],
+            state[IDX_DISTANCE],
+            state[IDX_SPEED],
+            state[IDX_ACCELERATION]
+        )
 
         isnothing(geometry) && break
         isnothing(drive)    && break
 
         # overwrite system states in-place
-        c = geometry.curvature
-        dc = geometry.dcurvature
-        v = drive.speed
-        a = drive.accel
+        state[IDX_CURVATURE] = geometry.curvature
+        state[IDX_DCURVATURE] = geometry.dcurvature
+        state[IDX_SPEED] = drive.speed
+        state[IDX_ACCELERATION] = drive.accel
 
         # simulate system evolution till next keyframe
-        x₀ = [t, s, x, y, v, a, φ, c, dc]
-        x₁ = generating_system(x₀, [])
-        push!(states, x₁)
-        t, s, x, y, v, a, φ, c, dc = x₁
+        state = generating_system(state, [])
+        push!(states, state)
     end
 
     return states

@@ -1,4 +1,5 @@
 using Tram2DKF
+using Tram2DKF: IDX_TIME, IDX_SPEED
 using Plots
 
 track = [
@@ -16,15 +17,8 @@ trip = [
 
 states = render_trip(track, trip, 0.01)
 
-t = states .|> x -> x[1]
-s = states .|> x -> x[2]
-x = states .|> x -> x[3]
-y = states .|> x -> x[4]
-v = states .|> x -> x[5]
-a = states .|> x -> x[6]
-φ = states .|> x -> x[7]
-c = states .|> x -> x[8]
-dc = states .|> x -> x[9]
+t = states .|> x -> x[IDX_TIME]
+v = states .|> x -> x[IDX_SPEED]
 
 plot(t, v)
 xlabel!("Time [s]")

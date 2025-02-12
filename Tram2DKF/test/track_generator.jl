@@ -1,5 +1,7 @@
 @testset "Track generation" begin
     @testset "Short drive forward" begin
+        using Tram2DKF: IDX_ACCELERATION, IDX_SPEED
+
         track::Vector{<:TrackSegment} = [
             StraightTrack(distance=100.0), # test that jumping to next segment works
             StraightTrack(distance=900.0)
@@ -19,15 +21,15 @@
         @test states[1] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         # acceleration probes
-        @test states[50][6]  == 1.0
-        @test states[150][6] == 0.0
-        @test states[250][6] == -1.0
+        @test states[50][IDX_ACCELERATION]  == 1.0
+        @test states[150][IDX_ACCELERATION] == 0.0
+        @test states[250][IDX_ACCELERATION] == -1.0
 
         # speed probes
-        @test states[50][5]  > 0.0
-        @test states[50][5]  < 10.0
-        @test states[150][5] == 10.0
-        @test states[250][5] < 10.0
-        @test states[250][5] > 0.0
+        @test states[50][IDX_SPEED]  > 0.0
+        @test states[50][IDX_SPEED]  < 10.0
+        @test states[150][IDX_SPEED] == 10.0
+        @test states[250][IDX_SPEED] < 10.0
+        @test states[250][IDX_SPEED] > 0.0
     end
 end

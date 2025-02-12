@@ -1,4 +1,5 @@
 using Tram2DKF
+using Tram2DKF: IDX_X_COORD, IDX_Y_COORD
 using Plots
 
 track = [
@@ -15,15 +16,8 @@ trip = [
 
 states = render_trip(track, trip, 0.1)
 
-t = states .|> x -> x[1]
-s = states .|> x -> x[2]
-x = states .|> x -> x[3]
-y = states .|> x -> x[4]
-v = states .|> x -> x[5]
-a = states .|> x -> x[6]
-φ = states .|> x -> x[7]
-c = states .|> x -> x[8]
-dc = states .|> x -> x[9]
+x = states .|> x -> x[IDX_X_COORD]
+y = states .|> x -> x[IDX_Y_COORD]
 
 plot(x, y, aspect_ratio=:equal)
 xlabel!("X [m]")
