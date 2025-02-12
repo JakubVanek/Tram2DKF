@@ -13,4 +13,5 @@ using JET
     include("ekf.jl")
     include("linesearch.jl")
     include("iekf.jl")
+    include("track_speedprofile.jl")
 end

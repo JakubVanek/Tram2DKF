@@ -8,6 +8,7 @@ include("ekf.jl")
 include("linesearch.jl")
 include("iekf.jl")
 include("motion_models.jl")
+include("track_speedprofile.jl")
 
 export DiscreteTime, ContinuousTime
 export StateEquation, MeasurementEquation
