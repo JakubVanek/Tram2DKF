@@ -51,7 +51,7 @@ nstates(::Integrator) = 1
 
 @testset "Euler discretization" begin
     ct_model = Integrator()
-    dt_model = discretize(ct_model, Euler(), 2.0)
+    dt_model = discretize(ct_model, Euler, 2.0)
 
     @test ninputs(dt_model) == 1
     @test nstates(dt_model) == 1

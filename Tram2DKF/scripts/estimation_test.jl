@@ -96,7 +96,7 @@ ODO_IMU = CompositeMeasurement([Odometry(), YawRate()])
 GNSS_ODO_IMU = CompositeMeasurement([GNSS(), ODO_IMU])
 
 transition_model_ct = PolarCTRA()
-transition_model = discretize(transition_model_ct, RK4(), Ts, 1)
+transition_model = discretize(transition_model_ct, RK4, Ts, 1)
 
 process_noise = Gaussian(
     zeros(Float64, nstates(transition_model)),

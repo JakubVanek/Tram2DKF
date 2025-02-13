@@ -1,7 +1,7 @@
 @testset "Identity stepper" begin
     linear_fn(x) = 2*x
 
-    stepper = IdentityStepping()
+    stepper = IdentityStepping
     # just passthrough the step
     @test stepper(linear_fn, 2, +10) == +10
     @test stepper(linear_fn, 2, -10) == -10

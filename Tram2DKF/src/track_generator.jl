@@ -75,7 +75,7 @@ end
 
 
 function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vector{<:TrajectorySegment}, dt::Float64, subsamples::Int = 1)
-    generating_system = discretize(TramMotionModel(), RK4(), dt / subsamples)
+    generating_system = discretize(TramMotionModel(), RK4, dt / subsamples)
 
     states = Vector{Vector{Float64}}()
     state = zeros(Float64, nstates(generating_system))
