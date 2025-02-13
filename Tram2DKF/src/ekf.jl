@@ -49,7 +49,7 @@ end
 Perform a data step of an extended Kalman filter.
 
 This allows you to reduce the undertainty of a state estimate
-by incorporating new information from a  state measurement.
+by incorporating new information from a state measurement.
 """
 function data_step(::ExtendedKalmanFilter,
     g::MeasurementEquation,
