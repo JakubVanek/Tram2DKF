@@ -1,16 +1,48 @@
+"""
+    LinearKalmanFilter
+
+The LKF allows you to optimally estimate states of linear
+dynamical systems under white Gaussian noise.
+"""
 struct LinearKalmanFilter <: KalmanSmoother end
 
+"""
+    forward_step(::LinearKalmanFilter,
+                 model::LTIStateEquation{DiscreteTime},
+                 prev_state::UncertainValue,
+                 input,
+                 process_noise::UncertainValue)
+
+Perform a time step of a linear Kalman filter.
+
+This will estimate the state of `model` at the next time
+step given the belief of `prev_state` and knowledge of `input`.
+"""
 function forward_step(::LinearKalmanFilter,
     model::LTIStateEquation{DiscreteTime},
     prev_state::UncertainValue,
     input,
     process_noise::UncertainValue)
 
-    external_in = !isempty(model.B) ? model.B * input : zeros(nstates(model))
-    x = model.A * mean(prev_state) + external_in + mean(process_noise) # nonstandard, but hopefully OK
+    prior_mean = mean(prev_state)
+
+    external_in = !isempty(model.B) ? model.B * input : zeros(eltype(prior_mean), nstates(model))
+    x = model.A * prior_mean + external_in + mean(process_noise) # nonstandard, but hopefully OK
     direct_forward_step(model, prev_state, x, process_noise)
 end
 
+"""
+    backward_step(::LinearKalmanFilter,
+                  model::LTIStateEquation{DiscreteTime},
+                  current_posterior::UncertainValue,
+                  next_prior::UncertainValue,
+                  next_smoothed::UncertainValue)
+
+Perform a smoothing step of a linear Rauch-Tung-Striebel smoother.
+
+This allows you to propagate information from new measurements back in time
+and make the estimates of past states less noisy.
+"""
 function backward_step(::LinearKalmanFilter,
     model::LTIStateEquation{DiscreteTime},
     current_posterior::UncertainValue,
@@ -24,40 +56,93 @@ function backward_step(::LinearKalmanFilter,
     Gaussian(new_x, new_Pxx)
 end
 
+"""
+    data_step(::LinearKalmanFilter,
+              model::LTIMeasurementEquation,
+              prior::UncertainValue,
+              input,
+              observation::UncertainValue)
+
+Perform a data step of a linear Kalman filter.
+
+This allows you to reduce the undertainty of a state estimate
+by incorporating new information from a linear state measurement.
+"""
 function data_step(::LinearKalmanFilter,
     model::LTIMeasurementEquation,
     prior::UncertainValue,
     input,
     observation::UncertainValue)
 
-    feedthrough = !isempty(model.D) ? model.D * input : zeros(noutputs(model))
-    innovation = mean(observation) - (model.C * mean(prior) + feedthrough)
+    observation_mean = mean(observation)
+
+    feedthrough = !isempty(model.D) ? model.D * input : zeros(eltype(observation_mean), noutputs(model))
+    innovation = observation_mean - (model.C * mean(prior) + feedthrough)
 
     innovation_data_step(model, prior, innovation, observation)
 end
 
 
+"""
+    direct_forward_step(
+        model::LTIStateEquation{DiscreteTime},
+        prev_state::UncertainValue,
+        new_state,
+        process_noise::UncertainValue)
+
+Compute the covariance of a state estimate at time k+1 given data up to time k.
+Then attach it to a precomputed mean `new_state` and return it as a new belief.
+"""
 function direct_forward_step(
     model::LTIStateEquation{DiscreteTime},
     prev_state::UncertainValue,
-    new_state::Vector{Float64},
+    new_state,
     process_noise::UncertainValue)
 
     Pxx = model.A * covariance(prev_state) * model.A' + covariance(process_noise)
     Gaussian(new_state, Pxx)
 end
 
+"""
+    direct_forward_step(
+        model::LTIStateEquation{DiscreteTime},
+        prev_state::SqrtGaussian,
+        new_state,
+        process_noise::SqrtGaussian)
+
+Compute the covariance of a state estimate at time k+1 given data up to time k.
+Then attach it to a precomputed mean `new_state` and return it as a new belief.
+
+Compared to the [`direct_forward_step`](@ref) above, this method uses the QR factorization
+to compute the final covariance. This may be more numerically stable.
+
+For details about the math, see
+T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
+"""
 function direct_forward_step(
     model::LTIStateEquation{DiscreteTime},
     prev_state::SqrtGaussian,
-    new_state::Vector{Float64},
+    new_state,
     process_noise::SqrtGaussian)
 
-    # [1] T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
     next_L = lq([process_noise.L  model.A * prev_state.L]).L
     SqrtGaussian(new_state, LowerTriangular(next_L))
 end
 
+"""
+    innovation_data_step(
+        model::LTIMeasurementEquation,
+        prior::UncertainValue,
+        innovation,
+        observation::UncertainValue)
+
+Compute a corrected state estimate given a new measurement.
+
+This method is intended as a reusable piece of [`data_step`](@ref).
+It takes in a `innovation`, which is the difference between
+the actual measured value and the value predicted by the state estimate `prior`.
+Thanks to this, it can be, in principle, applied to nonlinear models as well.
+"""
 function innovation_data_step(
     model::LTIMeasurementEquation,
     prior::UncertainValue,
@@ -79,6 +164,26 @@ function innovation_data_step(
 end
 
 
+"""
+    innovation_data_step(
+        model::LTIMeasurementEquation,
+        prior::SqrtGaussian,
+        innovation,
+        observation::SqrtGaussian)
+
+Compute a corrected state estimate given a new measurement.
+
+This method is intended as a reusable piece of [`data_step`](@ref).
+It takes in a `innovation`, which is the difference between
+the actual measured value and the value predicted by the state estimate `prior`.
+Thanks to this, it can be, in principle, applied to nonlinear models as well.
+
+Compared to the [`innovation_data_step`](@ref) above, this method uses
+the QR factorization to compute the final covariance. This may be more numerically stable.
+
+For details about the math, see
+T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
+"""
 function innovation_data_step(
     model::LTIMeasurementEquation,
     prior::SqrtGaussian,
@@ -88,10 +193,9 @@ function innovation_data_step(
     n = nstates(model)
     p = noutputs(model)
 
-    # [1] T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
     joint_cov_M = [
-        observation.L   model.C * prior.L;
-        zeros(n, p)     prior.L
+        observation.L                    model.C * prior.L;
+        zeros(eltype(prior.L), n, p)     prior.L
     ]
     joint_cov_L = lq(joint_cov_M).L
 
