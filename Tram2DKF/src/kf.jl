@@ -67,11 +67,14 @@ function innovation_data_step(
     R = covariance(observation)
     Pxx = covariance(prior)
     Pxy = Pxx * model.C'
-    Pyx = Pxy'
     Pyy = model.C * Pxx * model.C' + R
+    K = Pxy / Pyy
+    IKH = I - K * model.C
 
-    new_x = mean(prior) + Pxy * (Pyy \ innovation)
-    new_Pxx = Pxx - Pxy * (Pyy \ Pyx)
+    new_x = mean(prior) + K * innovation
+    new_Pxx = IKH*Pxx*IKH' + K*R*K'
+    # ^ Joseph form from https://en.wikipedia.org/wiki/Kalman_filter ,
+    # it should be a bit more numerically robust
     Gaussian(new_x, new_Pxx)
 end
 
