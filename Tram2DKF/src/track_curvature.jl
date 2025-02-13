@@ -41,6 +41,12 @@ However, it should return zero `position` when the `position` is before the star
 abstract type ActiveTrackSegment end
 
 
+
+
+
+
+# STRAIGHT TRACK
+
 """
     StraightTrack{NumT}
 
@@ -63,11 +69,21 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
-activate(seg::StraightTrack, pos::NumT) where {NumT <: AbstractFloat} = StraightTrackState{NumT}(pos, pos + seg.distance)
-function curvature(seg::StraightTrackState{NumT}, pos::NumT)::Union{TrackCurvature{NumT}, Nothing} where {NumT <: AbstractFloat}
-    pos < seg.to_point && return TrackCurvature{NumT}(curvature = 0.0, dcurvature = 0.0)
+activate(seg::StraightTrack, pos::NumT) where {NumT <: AbstractFloat} =
+    StraightTrackState{NumT}(pos, pos + seg.distance)
+
+function curvature(seg::StraightTrackState{NumT}, pos) where {NumT}
+    pos < seg.to_point && return TrackCurvature{NumT}(curvature = zero(NumT), dcurvature = zero(NumT))
     return nothing
 end
+
+
+
+
+
+
+
+# TRACK TURN
 
 """
     TrackTurn{NumT <: Real}
@@ -109,7 +125,7 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
-function activate(seg::TrackTurn, pos::NumT) where {NumT <: Real}
+function activate(seg::TrackTurn, pos::NumT) where {NumT <: AbstractFloat}
     seg.radius > 0                   || error("turn radius must be positive")
     seg.transition_curve_length >= 0 || error("track transition curve length must be nonnegative")
 
@@ -141,22 +157,23 @@ function activate(seg::TrackTurn, pos::NumT) where {NumT <: Real}
         )
     end
 end
-function curvature(seg::TrackTurnState{NumT}, pos::NumT)::Union{TrackCurvature{NumT}, Nothing} where {NumT <: AbstractFloat}
+
+function curvature(seg::TrackTurnState{NumT}, pos) where {NumT}
     pos < seg.transition_in_start && return TrackCurvature{NumT}(
-        curvature = 0.0,
-        dcurvature = 0.0
+        curvature = zero(NumT),
+        dcurvature = zero(NumT)
     )
     pos < seg.arc_start && return TrackCurvature{NumT}(
-        curvature = lerp(seg.transition_in_start, 0.0, seg.arc_start, seg.max_curvature, pos),
-        dcurvature = dlerp(seg.transition_in_start, 0.0, seg.arc_start, seg.max_curvature)
+        curvature = lerp(seg.transition_in_start, zero(NumT), seg.arc_start, seg.max_curvature, pos),
+        dcurvature = dlerp(seg.transition_in_start, zero(NumT), seg.arc_start, seg.max_curvature)
     )
     pos < seg.transition_out_start && return TrackCurvature{NumT}(
         curvature = seg.max_curvature,
-        dcurvature = 0.0
+        dcurvature = zero(NumT)
     )
     pos < seg.turn_end && return TrackCurvature{NumT}(
-        curvature = lerp(seg.transition_out_start, seg.max_curvature, seg.turn_end, 0.0, pos),
-        dcurvature = dlerp(seg.transition_out_start, seg.max_curvature, seg.turn_end, 0.0)
+        curvature = lerp(seg.transition_out_start, seg.max_curvature, seg.turn_end, zero(NumT), pos),
+        dcurvature = dlerp(seg.transition_out_start, seg.max_curvature, seg.turn_end, zero(NumT))
     )
     return nothing
 end

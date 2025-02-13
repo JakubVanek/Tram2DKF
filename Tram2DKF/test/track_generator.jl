@@ -7,7 +7,7 @@
             StraightTrack(distance=900.0)
         ]
 
-        trip::Vector{<:TrajectorySegment} = [
+        trip::Vector{<:SpeedProfileSegment} = [
             Stop(duration=1.0),
             Accelerate(to_speed=10.0, acceleration=1.0),
             ConstantSpeed(speed=10.0, distance=100.0),

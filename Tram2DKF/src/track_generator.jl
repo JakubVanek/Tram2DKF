@@ -27,11 +27,11 @@ function sample(chainer::TrackChainer, s::Float64)::Union{Nothing,TrackCurvature
 end
 
 mutable struct TrajectoryChainer
-    segments::Vector{<:TrajectorySegment}
+    segments::Vector{<:SpeedProfileSegment}
     active_index::Int
     active_segment::Any
 end
-function TrajectoryChainer(segments::Vector{<:TrajectorySegment}, t0::Float64, s0::Float64, v0::Float64, a0::Float64)
+function TrajectoryChainer(segments::Vector{<:SpeedProfileSegment}, t0::Float64, s0::Float64, v0::Float64, a0::Float64)
     TrajectoryChainer(
         segments, 1,
         activate(segments[1], t0, s0, v0, a0)
@@ -74,7 +74,7 @@ function (::TramMotionModel)(x, u)
 end
 
 
-function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vector{<:TrajectorySegment}, dt::Float64, subsamples::Int = 1)
+function render_trip(track_segments::Vector{<:TrackSegment}, tram_segments::Vector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1)
     generating_system = discretize(TramMotionModel(), RK4, dt / subsamples)
 
     states = Vector{Vector{Float64}}()
