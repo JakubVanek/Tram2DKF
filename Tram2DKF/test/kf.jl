@@ -50,7 +50,7 @@ end
         noise = SqrtGaussian(Gaussian([0.0], [1.0;;]))
         next = forward_step(LKF, DtIntegrator, prev, [1.0], noise)
 
-        @test typeof(next) == SqrtGaussian
+        @test next isa SqrtGaussian
         @test mean(next) ≈ [1.0]
         @test covariance(next) ≈ [2.0;;]
     end
@@ -59,7 +59,7 @@ end
         noise = SqrtGaussian(Gaussian([0.0], [1.0;;]))
         next = forward_step(LKF, DtIntegratorNoIn, prev, [], noise)
 
-        @test typeof(next) == SqrtGaussian
+        @test next isa SqrtGaussian
         @test mean(next) ≈ [0.0]
         @test covariance(next) ≈ [2.0;;]
     end
@@ -72,7 +72,7 @@ end
         measurement = SqrtGaussian(Gaussian([1.0], [1.0;;]))
         posterior = data_step(LKF, JustState, prior, [0.0], measurement)
 
-        @test typeof(posterior) == SqrtGaussian
+        @test posterior isa SqrtGaussian
         @test mean(posterior) ≈ [0.5]
         @test covariance(posterior) ≈ [0.5;;]
     end
@@ -81,7 +81,7 @@ end
         measurement = SqrtGaussian(Gaussian([1.0], [1.0;;]))
         posterior = data_step(LKF, JustStateNoIn, prior, [], measurement)
 
-        @test typeof(posterior) == SqrtGaussian
+        @test posterior isa SqrtGaussian
         @test mean(posterior) ≈ [0.5]
         @test covariance(posterior) ≈ [0.5;;]
     end

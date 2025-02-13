@@ -1,4 +1,4 @@
-struct LinearKalmanFilter <: KalmanFilter end
+struct LinearKalmanFilter <: KalmanSmoother end
 
 function forward_step(::LinearKalmanFilter,
     model::LTIStateEquation{DiscreteTime},
