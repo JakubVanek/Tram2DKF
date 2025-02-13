@@ -20,14 +20,15 @@ enough compared to its derivative at the origin point.
     the decrease that a linear approximation would achieve at the
     new point.
 
-    Acceptable values are between 0-1; good values might be less than 0.5.
+    Acceptable values are between 0-1.
     """
     strictness::T = 0.1
 
     """
     When a step needs to be shortened, multiply its length by this factor.
 
-    Acceptable values are between 0-1; good values might be less than 0.5.
+    Acceptable values are between 0-1; good values might be less than 0.5
+    (see <https://math.stackexchange.com/a/3932268>).
     """
     reduction::T = 0.5
 
