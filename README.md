@@ -1,5 +1,7 @@
 # Tram2DKF
 
+[![Build Status](https://github.com/JakubVanek/Tram2DKF/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JakubVanek/Tram2DKF/actions/workflows/CI.yml?query=branch%3Amain)
+
 A set of utilities for testing tram localization algorithms.
 
 The package can be roughly split in three parts:
