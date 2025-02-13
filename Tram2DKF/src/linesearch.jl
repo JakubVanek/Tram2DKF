@@ -16,8 +16,8 @@ enough compared to its derivative at the origin point.
 """
 @kwdef struct BacktrackingLineSearch{T <: Real}
     """
-    The function has to decrease at least this much times
-    the value that a linear approximation would have at the
+    The function has to decrease at least this value times
+    the decrease that a linear approximation would achieve at the
     new point.
 
     Acceptable values are between 0-1; good values might be less than 0.5.
