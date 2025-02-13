@@ -55,15 +55,15 @@ function sample(chainer::TrajectoryChainer, t::Float64, s::Float64, v::Float64, 
 end
 
 # state vector layout:
-IDX_TIME         = 1 # [s]
-IDX_DISTANCE     = 2 # [m]
-IDX_X_COORD      = 3 # [m]
-IDX_Y_COORD      = 4 # [m]
-IDX_SPEED        = 5 # [m/s]
-IDX_ACCELERATION = 6 # [m/s^2]
-IDX_HEADING      = 7 # [rad]
-IDX_CURVATURE    = 8 # [1/m]
-IDX_DCURVATURE   = 9 # [1/m^2]
+const IDX_TIME         = 1 # [s]
+const IDX_DISTANCE     = 2 # [m]
+const IDX_X_COORD      = 3 # [m]
+const IDX_Y_COORD      = 4 # [m]
+const IDX_SPEED        = 5 # [m/s]
+const IDX_ACCELERATION = 6 # [m/s^2]
+const IDX_HEADING      = 7 # [rad]
+const IDX_CURVATURE    = 8 # [1/m]
+const IDX_DCURVATURE   = 9 # [1/m^2]
 
 struct TramMotionModel <: StateEquation{ContinuousTime} end
 ninputs(::TramMotionModel) = 0
