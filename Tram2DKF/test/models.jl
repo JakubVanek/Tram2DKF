@@ -61,13 +61,13 @@ end
 
 
 struct MeasA <: MeasurementEquation end
-(::MeasA)(x,u) = x[1]
+(::MeasA)(x,u) = [x[1]]
 ninputs(::MeasA) = 0
 nstates(::MeasA) = 1
 noutputs(::MeasA) = 1
 
 struct MeasB <: MeasurementEquation end
-(::MeasB)(x,u) = x[1]^2
+(::MeasB)(x,u) = [x[1]^2]
 ninputs(::MeasB) = 0
 nstates(::MeasB) = 1
 noutputs(::MeasB) = 1
