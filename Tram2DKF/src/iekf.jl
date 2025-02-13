@@ -1,7 +1,7 @@
 # https://ieeexplore.ieee.org/document/10705771
 
 
-struct IteratedExtendedKalmanFilter{StepperT <: StepSizeControl} <: KalmanFilter
+struct IteratedExtendedKalmanFilter{StepperT} <: KalmanFilter
     step_control::StepperT
     min_step_size_norm::Float64
     max_iekf_iters::Int

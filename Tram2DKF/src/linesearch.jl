@@ -1,17 +1,52 @@
-abstract type StepSizeControl end
-# (iterate::StepSizeControl)(V, x0, xstep0), returns xstep
+"""
+    IdentityStepping(V, x0, xstep0)
 
-struct IdentityStepping <: StepSizeControl end
-struct BacktrackingLineSearch <: StepSizeControl
-    strictness::Float64
-    reduction::Float64
-    max_iters::Int
+Noop step size control: pass through the initial step size `xstep0`.
+"""
+IdentityStepping(V, x0, xstep0) = xstep0
+
+"""
+    BacktrackingLineSearch{T <: Real}
+
+Optimize step length by iteratively shortening the step and
+checking if the Armijo condition holds.
+
+The Armijo condition holds if the function has decreased
+enough compared to its derivative at the origin point.
+"""
+@kwdef struct BacktrackingLineSearch{T <: Real}
+    """
+    The function has to decrease at least this much times
+    the value that a linear approximation would have at the
+    new point.
+
+    Acceptable values are between 0-1; good values might be less than 0.5.
+    """
+    strictness::T = 0.1
+
+    """
+    When a step needs to be shortened, multiply its length by this factor.
+
+    Acceptable values are between 0-1; good values might be less than 0.5.
+    """
+    reduction::T = 0.5
+
+    "Iterate at most this many times."
+    max_iters::Int = 20
 end
 
-function (::IdentityStepping)(V, x0, xstep0)
-    return xstep0
-end
 
+"""
+    (bls::BacktrackingLineSearch)(V, x0, xstep0)
+
+Optimize step length via backtracking line search.
+
+The function will find such a step to satisfy the Armijo
+condition when minimizing function `V` in
+the direction `xstep0` when coming from point `x0`.
+
+The new step vector is returned.
+"""
 function (bls::BacktrackingLineSearch)(V, x0, xstep0)
     V0 = V(x0)
     dV0 = V'(x0)
@@ -19,7 +54,7 @@ function (bls::BacktrackingLineSearch)(V, x0, xstep0)
 
     multiplier = 1.0
 
-    for i in 1:bls.max_iters
+    for _ in 1:bls.max_iters
         step = xstep0 * multiplier
         x = x0 + step
 
@@ -32,5 +67,7 @@ function (bls::BacktrackingLineSearch)(V, x0, xstep0)
             multiplier = multiplier * bls.reduction
         end
     end
-    return zero(xstep0)
+
+    step = xstep0 * multiplier
+    return V(x0 + step) < V0 ? step : zero(step)
 end

@@ -22,7 +22,7 @@ export nstates, ninputs, noutputs
 export Gaussian, SqrtGaussian, mean, covariance, pdf, logpdf
 export KalmanFilter, LinearKalmanFilter, ExtendedKalmanFilter, IteratedExtendedKalmanFilter
 export forward_step, backward_step, data_step
-export StepSizeControl, IdentityStepping, BacktrackingLineSearch
+export IdentityStepping, BacktrackingLineSearch
 export TrackSegment, StraightTrack, TrackTurn
 export TrajectorySegment, Stop, Accelerate, ConstantSpeed
 export render_trip
