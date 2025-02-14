@@ -22,7 +22,7 @@ a model of it. This package accepts linear and nonlinear explicit state-space mo
 
 Nonlinear models are defined by creating a new structure that implements a
 [`StateEquation{Time}`](@ref) abstract type. The `Time` parameter determines
-the kind of the system: either `DiscreteTime` or `ContinuousTime`.
+the kind of the system: either [`DiscreteTime`](@ref) or [`ContinuousTime`](@ref).
 
 You could define a continuous-time model this way:
 
@@ -42,7 +42,7 @@ nstates(::FancyIntegrator) = 1
 ```
 
 You can then [`discretize`](@ref) such a model into a discrete-time model.
-Alternatively, you may directly define a struct subclassing `StateEquation{DiscreteTime}`.
+Alternatively, you may directly define a struct subclassing [`StateEquation{DiscreteTime}`](@ref).
 
 Linear models are represented using [`LTIStateEquation`](@ref) and [`LTIMeasurementEquation`](@ref)
 types. These structs directly accept the state-space matrices as their fields.
@@ -52,9 +52,28 @@ into a linear model.
 
 ## Kalman filtering
 
+Kalman filters, in a nutshell, allow you to fuse information from multiple sources.
+This allows you to reduce the effect of measurement noise on your estimates.
 
+The package currently implements a [`LinearKalmanFilter`](@ref),
+an [`ExtendedKalmanFilter`](@ref) and
+an [`IteratedExtendedKalmanFilter`](@ref).
+
+The structs themselves carry only the parameters of the respective algorithms.
+To invoke the filters, you can use:
+* the [`forward_step`](@ref) function for the time update step (= prediction of new state),
+* the [`data_step`](@ref) function for the data update step (= fusion of sensor measurements),
+* the [`backward_step`](@ref) function for a backward smoothing step (= smoothing of old states based on new measurements).
+
+These filters assume that measurements and states are Gaussian random variables.
+To represent such variables, the [`Gaussian`](@ref) and [`SqrtGaussian`](@ref)
+types is used. The latter is used to implement more numerically stable updates.
+Additionally, there is a [`UncertainValue`](@ref) abstract type that unifies the
+two representations behind two methods: [`mean`](@ref) and [`covariance`](@ref).
 
 ## Tram trajectories
 
 
+
 ## Demo scripts
+
