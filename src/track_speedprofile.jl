@@ -67,9 +67,24 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
+"""
+    activate(stop::Stop, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat}
+
+Return a description of the segment starting from a given tram motion state.
+"""
 activate(stop::Stop, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat} =
     StopState{NumT}(time + stop.duration)
 
+"""
+    drive(stop::StopState{NumT}, time, pos, speed, accel) where {NumT}
+
+Return the speed and acceleration at the given point on the
+speed profile. The `position` and `time` values are **not**
+relative wrt. the segment start, they are relative to the start
+of the entire journey.
+
+Return `nothing` when this segment has ended.
+"""
 function drive(stop::StopState{NumT}, time, pos, speed, accel) where {NumT}
     time < stop.end_at && return TrajectoryDrive{NumT}(speed = zero(NumT), accel = zero(NumT))
     return nothing
@@ -110,6 +125,11 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
+"""
+    activate(acc::Accelerate, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat}
+
+Return a description of the segment starting from a given tram motion state.
+"""
 activate(acc::Accelerate, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat} =
     AccelerateState{NumT}(
         time,
@@ -119,6 +139,16 @@ activate(acc::Accelerate, time::NumT, pos, speed, accel) where {NumT <: Abstract
         copysign(acc.acceleration, acc.to_speed - speed)
     )
 
+"""
+    drive(acc::AccelerateState{NumT}, time, pos, speed, accel) where {NumT}
+
+Return the speed and acceleration at the given point on the
+speed profile. The `position` and `time` values are **not**
+relative wrt. the segment start, they are relative to the start
+of the entire journey.
+
+Return `nothing` when this segment has ended.
+"""
 function drive(acc::AccelerateState{NumT}, time, pos, speed, accel) where {NumT}
     time < acc.from_time && return TrajectoryDrive{NumT}(
         speed = acc.from_speed,
@@ -160,9 +190,24 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
+"""
+    activate(spd::ConstantSpeed, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat}
+
+Return a description of the segment starting from a given tram motion state.
+"""
 activate(spd::ConstantSpeed, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat} =
     ConstantSpeedState{NumT}(spd.speed, pos + spd.distance)
 
+"""
+    drive(spd::ConstantSpeedState{NumT}, time, pos, speed, accel) where {NumT}
+
+Return the speed and acceleration at the given point on the
+speed profile. The `position` and `time` values are **not**
+relative wrt. the segment start, they are relative to the start
+of the entire journey.
+
+Return `nothing` when this segment has ended.
+"""
 function drive(spd::ConstantSpeedState{NumT}, time, pos, speed, accel) where {NumT}
     pos < spd.to_point && return TrajectoryDrive{NumT}(
         speed = spd.speed,
