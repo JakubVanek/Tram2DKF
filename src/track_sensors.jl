@@ -13,7 +13,7 @@ Additionally, the measurements are corrupted by a white Gaussian noise with stan
 deviation equal to `wn_std`.
 """
 simulate_gyro(states, wn_std) =
-    states .|> state -> wn_std * randn(Float64, 3) + [0, 0, state[IDX_SPEED] * state[IDX_CURVATURE]]
+    states .|> state -> wn_std * randn(eltype(state), 3) + [0, 0, state[IDX_SPEED] * state[IDX_CURVATURE]]
 
 """
     simulate_accelerometer(states, wn_std)
@@ -25,7 +25,7 @@ Additionally, the measurements are corrupted by a white Gaussian noise with stan
 deviation equal to `wn_std`.
 """
 simulate_accelerometer(states, wn_std) =
-    states .|> state -> wn_std * randn(Float64, 3) + [
+    states .|> state -> wn_std * randn(eltype(state), 3) + [
         state[IDX_ACCELERATION],
         state[IDX_SPEED]^2 * state[IDX_CURVATURE],
         EARTH_GRAVITY
@@ -57,7 +57,7 @@ Finally, all the components are corrupted by a white Gaussian noise with
 """
 function simulate_gnss(states, altitude, cov_matrix)
     cov_sqrt = cholesky(cov_matrix).U
-    return states .|> state -> cov_sqrt * randn(Float64, 3) + [
+    return states .|> state -> cov_sqrt * randn(eltype(state), 3) + [
         state[IDX_X_COORD],
         state[IDX_Y_COORD],
         altitude
