@@ -69,9 +69,22 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
+"""
+    activate(seg::StraightTrack, pos::NumT) where {NumT <: AbstractFloat}
+
+Returns a description of the segment given its starting position in metres.
+"""
 activate(seg::StraightTrack, pos::NumT) where {NumT <: AbstractFloat} =
     StraightTrackState{NumT}(pos, pos + seg.distance)
 
+"""
+    curvature(seg::TrackTurnState{NumT}, pos) where {NumT}
+
+Return the local curvature at `position` metres from track origin.
+The `position` value is **not** relative wrt. the segment start.
+
+However, return `nothing` when `position` is after the end of the track segment.
+"""
 function curvature(seg::StraightTrackState{NumT}, pos) where {NumT}
     pos < seg.to_point && return TrackCurvature{NumT}(curvature = zero(NumT), dcurvature = zero(NumT))
     return nothing
@@ -125,6 +138,11 @@ end
 
 # implementation of the TrackSegment and ActiveTrackSegment interfaces
 
+"""
+    activate(seg::TrackTurn, pos::NumT) where {NumT <: AbstractFloat}
+
+Returns a description of the segment given its starting position in metres.
+"""
 function activate(seg::TrackTurn, pos::NumT) where {NumT <: AbstractFloat}
     seg.radius > 0                   || error("turn radius must be positive")
     seg.transition_curve_length >= 0 || error("track transition curve length must be nonnegative")
@@ -158,6 +176,14 @@ function activate(seg::TrackTurn, pos::NumT) where {NumT <: AbstractFloat}
     end
 end
 
+"""
+    curvature(seg::TrackTurnState{NumT}, pos) where {NumT}
+
+Return the local curvature at `position` metres from track origin.
+The `position` value is **not** relative wrt. the segment start.
+
+However, return `nothing` when `position` is after the end of the track segment.
+"""
 function curvature(seg::TrackTurnState{NumT}, pos) where {NumT}
     pos < seg.transition_in_start && return TrackCurvature{NumT}(
         curvature = zero(NumT),
