@@ -27,3 +27,6 @@ y = states .|> x -> x[IDX_Y_COORD]
 plot(x, y, aspect_ratio=:equal)
 xlabel!("X [m]")
 ylabel!("Y [m]")
+
+# save plot into PNG
+png("curved_track.png")

@@ -47,6 +47,8 @@ trip = [
 states = render_trip(track, trip, Ts, 10)
 t  = states .|> x -> x[1]
 s  = states .|> x -> x[2];
+cx = states .|> x -> x[3];
+cy = states .|> x -> x[4];
 v  = states .|> x -> x[5];
 a  = states .|> x -> x[6];
 
@@ -136,6 +138,10 @@ end
 estx = extract_ts(hypotheses, 1)
 esty = extract_ts(hypotheses, 2)
 estv = extract_ts(hypotheses, 3)
-# plot(t, esty)
-plot(estx, esty; aspect_ratio=:equal)
-# plot(t, estv)
+plot(cx, cy; aspect_ratio=:equal, lc=:red, label="Ground truth")
+plot!(estx, esty; aspect_ratio=:equal, lc=:blue, label="Filtered value")
+xlabel!("X coordinate [m]")
+ylabel!("Y coordinate [m]")
+
+# save plot into PNG
+png("estimate.png")

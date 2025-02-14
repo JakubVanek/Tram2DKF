@@ -28,3 +28,6 @@ v = states .|> x -> x[IDX_SPEED]
 plot(t, v)
 xlabel!("Time [s]")
 ylabel!("Speed [m/s]")
+
+# save plot into PNG
+png("speed_profile.png")
