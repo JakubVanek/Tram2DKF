@@ -81,7 +81,7 @@ nontrivial.
 This package allows you to generate synthetic data based on a simple description.
 The description is composed of two parts:
 * Description of the tram track. This basically determines where the track turns
-  straight track segments are, and what are their parameters.
+  and straight track segments are, and what are their parameters.
 * Description of the tram speed profile. This determines when the tram accelerates
   or decelerates.
 
