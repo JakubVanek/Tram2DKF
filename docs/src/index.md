@@ -102,7 +102,8 @@ track = [
 trip = [
     Stop(duration=1.0),
     Accelerate(to_speed=10.0, acceleration=1.0),
-    ConstantSpeed(speed=5.0, distance=50.0),
+    ConstantSpeed(speed=10.0, distance=100.0),
+    Accelerate(to_speed=0.0, acceleration=1.0),
     Stop(duration=10.0),
 ]
 
