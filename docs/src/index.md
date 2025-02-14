@@ -73,7 +73,56 @@ two representations behind two methods: [`mean`](@ref) and [`covariance`](@ref).
 
 ## Tram trajectories
 
+The ultimate goal of this package is to be useful in developing tram
+localization algorithms. To compare different algorithms, it is necessary
+to obtain some dataset on which they could be tested. This is somewhat
+nontrivial.
 
+This package allows you to generate synthetic data based on a simple description.
+The description is composed of two parts:
+* Description of the tram track. This basically determines where the track turns
+  straight track segments are, and what are their parameters.
+* Description of the tram speed profile. This determines when the tram accelerates
+  or decelerates.
+
+This is illustrated by a simple example:
+
+```julia
+using Tram2DKF
+using LinearAlgebra
+
+# Define track profile
+track = [
+    StraightTrack(distance=100.0),
+    TrackTurn(angle=deg2rad(+90), radius=20.0, transition_curve_length=0.0),
+    StraightTrack(distance=100.0),
+]
+
+# Define speed profile
+trip = [
+    Stop(duration=1.0),
+    Accelerate(to_speed=10.0, acceleration=1.0),
+    ConstantSpeed(speed=5.0, distance=50.0),
+    Stop(duration=10.0),
+]
+
+# Generate ground truth data
+states = render_trip(track, trip, Ts, 10)
+# ^ `states` is a vector of state vectors at different times
+
+# Simulate sensor measurements corrupted by noise
+gyro = simulate_gyro(states, 0.02)
+acc  = simulate_accelerometer(states, 0.1)
+odo  = simulate_odometry(states, 0.01)
+gnss = simulate_gnss(states, 200, I(3))
+```
 
 ## Demo scripts
 
+There are three example scripts available:
+* `scripts/plot_curved_track.jl` shows how to generate samples of the track position without concern for any tram dynamics.
+* `scripts/plot_speed_profile.jl` shows how to generate trajectories of trams when considering changes in speed.
+* `scripts/estimation_test.jl` is an all-in-one example:
+  * first, the test data is generated
+  * then, a model is defined (or, rather, a predefined [`PolarCTRA`](@ref) model is reused)
+  * finally, a Kalman filter is run to try to undo the effect of noise in measurements
