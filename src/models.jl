@@ -277,11 +277,11 @@ Linearize the given nonlinear dynamic model `f`
 at the operating point specified by state `x` and control `u`.
 """
 function linearize(f::StateEquation{TimeT}, x, u) where {TimeT <: Time}
-    A = ForwardDiff.jacobian((x_) -> f(x_, u), x)
+    A = ForwardDiff.jacobian((x_) -> f(x_, u), x)::Matrix{eltype(x)}
     if ninputs(f) == 0
         B = zeros(nstates(f), 0)
     else
-        B = ForwardDiff.jacobian((u_) -> f(x, u_), u)
+        B = ForwardDiff.jacobian((u_) -> f(x, u_), u)::Matrix{eltype(x)}
     end
     return LTIStateEquation{TimeT}(A, B)
 end
@@ -294,11 +294,11 @@ Linearize the given nonlinear measurement model `g`
 at the operating point specified by state `x` and control `u`.
 """
 function linearize(g::MeasurementEquation, x, u)
-    C = ForwardDiff.jacobian((x_) -> g(x_, u), x)
+    C = ForwardDiff.jacobian((x_) -> g(x_, u), x)::Matrix{eltype(x)}
     if ninputs(g) == 0
         D = zeros(noutputs(g), 0)
     else
-        D = ForwardDiff.jacobian((u_) -> g(x, u_), u)
+        D = ForwardDiff.jacobian((u_) -> g(x, u_), u)::Matrix{eltype(x)}
     end
     return LTIMeasurementEquation(C, D)
 end
