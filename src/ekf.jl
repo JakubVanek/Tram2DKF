@@ -1,3 +1,6 @@
+using ForwardDiff: jacobian!
+using DiffResults: JacobianResult, value, jacobian
+
 """
     Extended Kalman filter
 
@@ -31,10 +34,13 @@ function forward_step(::ExtendedKalmanFilter,
     x = mean(prev_state)
     u = input
 
+    ad_f = JacobianResult(x)
+    jacobian!(ad_f, (x_) -> f(x_, u), x)
+
     direct_forward_step(
-        linearize(f, x, u).A,
+        jacobian(ad_f),
         prev_state,
-        f(x, u) + mean(process_noise),
+        value(ad_f) + mean(process_noise),
         process_noise
     )
 end
@@ -59,11 +65,15 @@ function data_step(::ExtendedKalmanFilter,
 
     x = mean(prior)
     u = input
+    y = mean(observation)
+
+    ad_g = JacobianResult(y, x)
+    jacobian!(ad_g, (x_) -> g(x_, u), x)
 
     innovation_data_step(
-        linearize(g, x, u).C,
+        jacobian(ad_g),
         prior,
-        mean(observation) - g(x, u),
+        y - value(ad_g),
         observation
     )
 end

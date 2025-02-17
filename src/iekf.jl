@@ -1,3 +1,6 @@
+using ForwardDiff: jacobian!
+using DiffResults: JacobianResult, value, jacobian
+
 """
     IteratedExtendedKalmanFilter{StepSizeControlT, StepNormT <: Real}
 
@@ -86,9 +89,10 @@ function data_step(iekf::IteratedExtendedKalmanFilter,
     observation::UncertainValue)
 
     current_estimate = mean(prior)
+    ad_g = JacobianResult(mean(observation), current_estimate)
 
     for _ in 1:iekf.max_iekf_iters
-        gn_x = mean(iekf_gauss_newton_step(g, prior, current_estimate, input, observation))
+        gn_x = mean(iekf_gauss_newton_step!(ad_g, g, prior, current_estimate, input, observation))
         gn_step = gn_x - current_estimate
 
         map_criterion(x) = -logpdf(observation, g(x, input)) - logpdf(prior, x)
@@ -100,11 +104,12 @@ function data_step(iekf::IteratedExtendedKalmanFilter,
         end
     end
 
-    iekf_finalize(g, prior, current_estimate, input, observation)
+    iekf_finalize(ad_g, g, prior, current_estimate, input, observation)
 end
 
 """
-    iekf_gauss_newton_step(
+    iekf_gauss_newton_step!(
+        ad_cache,
         g::MeasurementEquation,
         prior::UncertainValue,
         current_est,
@@ -118,22 +123,24 @@ unscaled step is returned.
 
 See https://ieeexplore.ieee.org/document/10705771 for details.
 """
-function iekf_gauss_newton_step(
+function iekf_gauss_newton_step!(
+    ad_g, # cache allocation
     g::MeasurementEquation,
     prior::UncertainValue,
     current_est,
     input,
     observation::UncertainValue)
 
-    lin_msr = linearize(g, current_est, input)
-    innovation = mean(observation) - g(current_est, input) - lin_msr.C * (mean(prior) - current_est)
+    jacobian!(ad_g, (x_) -> g(x_, input), current_est)
+    innovation = mean(observation) - value(ad_g) - jacobian(ad_g) * (mean(prior) - current_est)
 
     # this handles both square root and normal Gaussians
-    innovation_data_step(lin_msr.C, prior, innovation, observation)
+    innovation_data_step(jacobian(ad_g), prior, innovation, observation)
 end
 
 """
     iekf_finalize(
+        ad_cache,
         g::MeasurementEquation,
         prior::UncertainValue,
         map_estimate,
@@ -143,18 +150,20 @@ end
 Compute the final state estimate covariance around the MAP estimate.
 """
 function iekf_finalize(
+    ad_g,
     g::MeasurementEquation,
     prior::UncertainValue,
     map_estimate,
     input,
     observation::UncertainValue)
 
-    last_gn_step = iekf_gauss_newton_step(g, prior, map_estimate, input, observation)
+    last_gn_step = iekf_gauss_newton_step!(ad_g, g, prior, map_estimate, input, observation)
     Gaussian(map_estimate, covariance(last_gn_step))
 end
 
 """
     iekf_finalize(
+        ad_cache,
         g::MeasurementEquation,
         prior::SqrtGaussian,
         map_estimate,
@@ -166,6 +175,7 @@ Compute the final state estimate covariance around the MAP estimate.
 This variant uses square-root-filtering algoritms for increased accuracy.
 """
 function iekf_finalize(
+    ad_g,
     g::MeasurementEquation,
     prior::SqrtGaussian,
     map_estimate,
@@ -173,6 +183,6 @@ function iekf_finalize(
     observation::SqrtGaussian)
 
     # shall return SqrtGaussian
-    last_gn_step = iekf_gauss_newton_step(g, prior, map_estimate, input, observation)
+    last_gn_step = iekf_gauss_newton_step!(ad_g, g, prior, map_estimate, input, observation)
     SqrtGaussian(map_estimate, last_gn_step.L)
 end
