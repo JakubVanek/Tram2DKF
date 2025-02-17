@@ -50,7 +50,13 @@ The new step vector is returned.
 """
 function (bls::BacktrackingLineSearch)(V, x0, xstep0)
     V0 = V(x0)
-    dV0 = V'(x0)
+    if x0 isa AbstractVector{<:Real}
+        dV0 = ForwardDiff.gradient(V, x0)
+    elseif x0 isa Number
+        dV0 = ForwardDiff.derivative(V, x0)
+    else
+        error("x0 has unknown data type")
+    end
     full_step_threshold = -(dV0 ⋅ xstep0) * bls.strictness
 
     multiplier = 1.0
