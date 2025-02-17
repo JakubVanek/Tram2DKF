@@ -28,7 +28,7 @@ function forward_step(::LinearKalmanFilter,
 
     external_in = !isempty(model.B) ? model.B * input : zeros(eltype(prior_mean), nstates(model))
     x = model.A * prior_mean + external_in + mean(process_noise) # nonstandard, but hopefully OK
-    direct_forward_step(model, prev_state, x, process_noise)
+    direct_forward_step(model.A, prev_state, x, process_noise)
 end
 
 """
@@ -79,7 +79,7 @@ function data_step(::LinearKalmanFilter,
     feedthrough = !isempty(model.D) ? model.D * input : zeros(eltype(observation_mean), noutputs(model))
     innovation = observation_mean - (model.C * mean(prior) + feedthrough)
 
-    innovation_data_step(model, prior, innovation, observation)
+    innovation_data_step(model.C, prior, innovation, observation)
 end
 
 
@@ -94,12 +94,12 @@ Compute the covariance of a state estimate at time k+1 given data up to time k.
 Then attach it to a precomputed mean `new_state` and return it as a new belief.
 """
 function direct_forward_step(
-    model::LTIStateEquation{DiscreteTime},
+    A::AbstractMatrix{<:Real},
     prev_state::UncertainValue,
     new_state,
     process_noise::UncertainValue)
 
-    Pxx = model.A * covariance(prev_state) * model.A' + covariance(process_noise)
+    Pxx = A * covariance(prev_state) * A' + covariance(process_noise)
     Gaussian(new_state, Pxx)
 end
 
@@ -120,12 +120,12 @@ For details about the math, see
 T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
 """
 function direct_forward_step(
-    model::LTIStateEquation{DiscreteTime},
+    A::AbstractMatrix{<:Real},
     prev_state::SqrtGaussian,
     new_state,
     process_noise::SqrtGaussian)
 
-    next_L = lq([process_noise.L  model.A * prev_state.L]).L
+    next_L = lq([process_noise.L  A * prev_state.L]).L
     SqrtGaussian(new_state, LowerTriangular(next_L))
 end
 
@@ -144,17 +144,17 @@ the actual measured value and the value predicted by the state estimate `prior`.
 Thanks to this, it can be, in principle, applied to nonlinear models as well.
 """
 function innovation_data_step(
-    model::LTIMeasurementEquation,
+    C::AbstractMatrix{<:Real},
     prior::UncertainValue,
     innovation,
     observation::UncertainValue)
 
     R = covariance(observation)
     Pxx = covariance(prior)
-    Pxy = Pxx * model.C'
-    Pyy = model.C * Pxx * model.C' + R
+    Pxy = Pxx * C'
+    Pyy = C * Pxx * C' + R
     K = Pxy / Pyy
-    IKH = I - K * model.C
+    IKH = I - K * C
 
     new_x = mean(prior) + K * innovation
     new_Pxx = IKH*Pxx*IKH' + K*R*K'
@@ -185,16 +185,16 @@ For details about the math, see
 T. M. Chin, „Square-root formulas for Kalman filter, information filter, and RTS smoother: Links via boomerang prediction residual".
 """
 function innovation_data_step(
-    model::LTIMeasurementEquation,
+    C::AbstractMatrix{<:Real},
     prior::SqrtGaussian,
     innovation,
     observation::SqrtGaussian)
 
-    n = nstates(model)
-    p = noutputs(model)
+    n = size(C, 2)
+    p = size(C, 1)
 
     joint_cov_M = [
-        observation.L                    model.C * prior.L;
+        observation.L                    C * prior.L;
         zeros(eltype(prior.L), n, p)     prior.L
     ]
     joint_cov_L = lq(joint_cov_M).L

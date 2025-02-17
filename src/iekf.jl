@@ -129,7 +129,7 @@ function iekf_gauss_newton_step(
     innovation = mean(observation) - g(current_est, input) - lin_msr.C * (mean(prior) - current_est)
 
     # this handles both square root and normal Gaussians
-    innovation_data_step(lin_msr, prior, innovation, observation)
+    innovation_data_step(lin_msr.C, prior, innovation, observation)
 end
 
 """

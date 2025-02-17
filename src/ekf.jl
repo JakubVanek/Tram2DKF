@@ -32,7 +32,7 @@ function forward_step(::ExtendedKalmanFilter,
     u = input
 
     direct_forward_step(
-        linearize(f, x, u),
+        linearize(f, x, u).A,
         prev_state,
         f(x, u) + mean(process_noise),
         process_noise
@@ -61,7 +61,7 @@ function data_step(::ExtendedKalmanFilter,
     u = input
 
     innovation_data_step(
-        linearize(g, x, u),
+        linearize(g, x, u).C,
         prior,
         mean(observation) - g(x, u),
         observation
