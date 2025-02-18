@@ -125,7 +125,7 @@ function direct_forward_step(
     new_state,
     process_noise::SqrtGaussian)
 
-    next_L = lq([process_noise.L  A * prev_state.L]).L
+    next_L = lq!([process_noise.L  A * prev_state.L]).L
     SqrtGaussian(new_state, LowerTriangular(next_L))
 end
 
@@ -197,7 +197,7 @@ function innovation_data_step(
         observation.L                    C * prior.L;
         zeros(eltype(prior.L), n, p)     prior.L
     ]
-    joint_cov_L = lq(joint_cov_M).L
+    joint_cov_L = lq!(joint_cov_M).L
 
     posterior_Ly = joint_cov_L[1:p, 1:p]
     posterior_Lx = joint_cov_L[p+1:p+n, p+1:p+n]
