@@ -21,6 +21,8 @@ Represents the local shape of the speed profile.
     speed::NumT
     "Current tram acceleration, in m/s^2."
     accel::NumT
+    "Current tram jerk, in m/s^3."
+    jerk::NumT
 end
 
 """
@@ -86,7 +88,11 @@ of the entire journey.
 Return `nothing` when this segment has ended.
 """
 function drive(stop::StopState{NumT}, time, pos, speed, accel) where {NumT}
-    time < stop.end_at && return TrajectoryDrive{NumT}(speed = zero(NumT), accel = zero(NumT))
+    time < stop.end_at && return TrajectoryDrive{NumT}(
+        speed = zero(NumT),
+        accel = zero(NumT),
+        jerk = zero(NumT)
+    )
     return nothing
 end
 
@@ -152,11 +158,13 @@ Return `nothing` when this segment has ended.
 function drive(acc::AccelerateState{NumT}, time, pos, speed, accel) where {NumT}
     time < acc.from_time && return TrajectoryDrive{NumT}(
         speed = acc.from_speed,
-        accel = zero(NumT)
+        accel = zero(NumT),
+        jerk = zero(NumT),
     )
     time < acc.to_time && return TrajectoryDrive{NumT}(
         speed = lerp(acc.from_time, acc.from_speed, acc.to_time, acc.to_speed, time),
-        accel = acc.acceleration
+        accel = acc.acceleration,
+        jerk = zero(NumT),
     )
     return nothing
 end
@@ -211,7 +219,8 @@ Return `nothing` when this segment has ended.
 function drive(spd::ConstantSpeedState{NumT}, time, pos, speed, accel) where {NumT}
     pos < spd.to_point && return TrajectoryDrive{NumT}(
         speed = spd.speed,
-        accel = zero(NumT)
+        accel = zero(NumT),
+        jerk = zero(NumT)
     )
     return nothing
 end

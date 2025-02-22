@@ -18,7 +18,7 @@
         states = render_trip(track, trip, 0.1)
 
         # initial state
-        @test states[1] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        @test states[1] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         # acceleration probes
         @test states[50][IDX_ACCELERATION]  == 1.0

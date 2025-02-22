@@ -102,10 +102,10 @@ at least straight lines, circular arcs and clothoids.
 """
 struct TramMotionModel <: StateEquation{ContinuousTime} end
 ninputs(::TramMotionModel) = 0
-nstates(::TramMotionModel) = 9
+nstates(::TramMotionModel) = 10
 function (::TramMotionModel)(x, u)
-    t, s, x, y, v, a, φ, c, dc = x
-    return [1, v, v * cos(φ), v * sin(φ), a, 0, v*c, v*dc, 0]
+    t, s, x, y, v, a, j, φ, c, dc = x
+    return [1, v, v * cos(φ), v * sin(φ), a, j, 0, v*c, v*dc, 0]
 end
 
 "Index into TramMotionModel state: Time elapsed since start, in seconds"
@@ -120,12 +120,14 @@ const IDX_Y_COORD      = 4 # [m]
 const IDX_SPEED        = 5 # [m/s]
 "Index into TramMotionModel state: Forward acceleration of the tram, in m/s^2"
 const IDX_ACCELERATION = 6 # [m/s^2]
+"Index into TramMotionModel state: Forward jerk of the tram, in m/s^3"
+const IDX_JERK         = 7 # [m/s^2]
 "Index into TramMotionModel state: Track heading, in radians"
-const IDX_HEADING      = 7 # [rad]
+const IDX_HEADING      = 8 # [rad]
 "Index into TramMotionModel state: Track curvature, in 1/m"
-const IDX_CURVATURE    = 8 # [1/m]
+const IDX_CURVATURE    = 9 # [1/m]
 "Index into TramMotionModel state: Track curvature derivative, in 1/m^2"
-const IDX_DCURVATURE   = 9 # [1/m^2]
+const IDX_DCURVATURE   = 10 # [1/m^2]
 
 
 
