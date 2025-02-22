@@ -40,6 +40,15 @@ relative wrt. the segment start, they are relative to the start
 of the entire journey.
 
 The method needs to return `nothing` when this segment has ended.
+
+    distance(segment::ActiveSpeedProfileSegment)
+
+Get the distance travelled during this segment in metres.
+
+    duration(segment::ActiveSpeedProfileSegment)
+
+Get the duration in seconds that it will take the tram to traverse this segment.
+
 """
 abstract type ActiveSpeedProfileSegment end
 
@@ -64,6 +73,7 @@ end
 Generate zero speed until the `end_at` time mark.
 """
 struct StopState{NumT <: AbstractFloat} <: ActiveSpeedProfileSegment
+    start_at::NumT
     end_at::NumT
 end
 
@@ -75,7 +85,7 @@ end
 Return a description of the segment starting from a given tram motion state.
 """
 activate(stop::Stop, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat} =
-    StopState{NumT}(time + stop.duration)
+    StopState{NumT}(time, time + stop.duration)
 
 """
     drive(stop::StopState{NumT}, time, pos, speed, accel) where {NumT}
@@ -95,6 +105,9 @@ function drive(stop::StopState{NumT}, time, pos, speed, accel) where {NumT}
     )
     return nothing
 end
+
+distance(stop::StopState{NumT}) where {NumT} = zero(NumT)
+duration(stop::StopState) = stop.end_at - stop.start_at
 
 
 
@@ -169,6 +182,11 @@ function drive(acc::AccelerateState{NumT}, time, pos, speed, accel) where {NumT}
     return nothing
 end
 
+function distance(acc::AccelerateState{NumT}) where {NumT}
+    time = duration(acc)
+    return acc.from_speed * time + 0.5 * acc.acceleration * time^2
+end
+duration(acc::AccelerateState{NumT}) where {NumT} = acc.to_time - acc.from_time
 
 
 
@@ -304,7 +322,22 @@ function drive(acc::SmoothAccelerateState{NumT}, time, pos, speed, accel) where 
     return nothing
 end
 
+function distance(acc::SmoothAccelerateState{NumT}) where {NumT}
+    t_ramp = acc.time_start_steady - acc.time_start_rampup
+    t_steady = acc.time_start_rampdown - acc.time_start_steady
 
+    v_initial = acc.initial_speed
+    v_after_rampup = v_initial + acc.initial_jerk * t_ramp^2/2
+    v_after_steady = v_after_rampup + acc.max_accel * t_steady
+
+    s_rampup   = v_initial      * t_ramp                                   + acc.initial_jerk * t_ramp^3/6
+    s_steady   = v_after_rampup * t_steady + acc.max_accel * t_steady^2/2
+    s_rampdown = v_after_steady * t_ramp   + acc.max_accel * t_ramp^2/2    - acc.initial_jerk * t_ramp^3/6
+
+    return s_rampup + s_steady + s_rampdown
+end
+
+duration(acc::SmoothAccelerateState) = acc.time_finish - acc.time_start_rampup
 
 
 
@@ -330,6 +363,7 @@ Generate a constant speed profile until the `to_point` time mark.
 """
 struct ConstantSpeedState{NumT <: AbstractFloat} <: ActiveSpeedProfileSegment
     speed::NumT
+    from_point::NumT
     to_point::NumT
 end
 
@@ -342,7 +376,7 @@ end
 Return a description of the segment starting from a given tram motion state.
 """
 activate(spd::ConstantSpeed, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat} =
-    ConstantSpeedState{NumT}(spd.speed, pos + spd.distance)
+    ConstantSpeedState{NumT}(spd.speed, pos, pos + spd.distance)
 
 """
     drive(spd::ConstantSpeedState{NumT}, time, pos, speed, accel) where {NumT}
@@ -362,3 +396,6 @@ function drive(spd::ConstantSpeedState{NumT}, time, pos, speed, accel) where {Nu
     )
     return nothing
 end
+
+distance(spd::ConstantSpeedState) = spd.to_point - spd.from_point
+duration(spd::ConstantSpeedState) = abs(distance(spd) / spd.speed)

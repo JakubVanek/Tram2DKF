@@ -1,4 +1,4 @@
-using Tram2DKF: StraightTrack, TrackCurvature, TrackTurn, activate, curvature
+using Tram2DKF: StraightTrack, TrackCurvature, TrackTurn, activate, curvature, distance
 import Base.isapprox
 
 isapprox(a::TrackCurvature, b::TrackCurvature) = (a.curvature ≈ b.curvature) && (a.dcurvature ≈ b.dcurvature)
@@ -12,6 +12,7 @@ isapprox(a::TrackCurvature, b::TrackCurvature) = (a.curvature ≈ b.curvature) &
         @test curvature(segment, 109.0) == TrackCurvature(curvature = 0.0, dcurvature = 0.0)
         @test curvature(segment, 110.0) === nothing
         @test curvature(segment, 200.0) === nothing
+        @test distance(segment) == 100.0
     end
 
     @testset "Sharp left turn" begin
@@ -21,6 +22,7 @@ isapprox(a::TrackCurvature, b::TrackCurvature) = (a.curvature ≈ b.curvature) &
         @test curvature(segment, 0.0)            == TrackCurvature(curvature = 1/radius, dcurvature = 0.0)
         @test curvature(segment, angle/2*radius) == TrackCurvature(curvature = 1/radius, dcurvature = 0.0)
         @test curvature(segment, angle*radius)   === nothing
+        @test distance(segment) == abs(angle*radius)
     end
 
     @testset "Sharp right turn" begin
@@ -30,16 +32,19 @@ isapprox(a::TrackCurvature, b::TrackCurvature) = (a.curvature ≈ b.curvature) &
         @test curvature(segment, 0.0)                 == TrackCurvature(curvature = -1/radius, dcurvature = 0.0)
         @test curvature(segment, abs(angle/2)*radius) == TrackCurvature(curvature = -1/radius, dcurvature = 0.0)
         @test curvature(segment, abs(angle)*radius)   === nothing
+        @test distance(segment) == abs(angle*radius)
     end
 
 
     @testset "Left turn with transitions" begin
         angle = pi/2
         radius = 10.0
-        segment = activate(TrackTurn(angle, radius, 1.0), 0.0)
+        transition = 1.0
+        segment = activate(TrackTurn(angle, radius, transition), 0.0)
         @test curvature(segment, 0.0)            == TrackCurvature(curvature = 0.0, dcurvature = 0.1)
         @test curvature(segment, angle/2*radius) == TrackCurvature(curvature = 1/radius, dcurvature = 0.0) # hopefully
         @test curvature(segment, 100.0)          === nothing
+        @test distance(segment) ≈ 2*transition + abs((angle - transition / radius) * radius)
     end
 
 

@@ -37,6 +37,10 @@ The `position` value is **not** relative wrt. the segment start.
 
 The method needs to return `nothing` when `position` is after the end of the track segment.
 However, it should return zero `position` when the `position` is before the start of the segment.
+
+    distance(segment::ActiveTrackSegment)::NumT
+
+Returns the length of this segment in metres.
 """
 abstract type ActiveTrackSegment end
 
@@ -90,7 +94,7 @@ function curvature(seg::StraightTrackState{NumT}, pos) where {NumT}
     return nothing
 end
 
-
+distance(seg::StraightTrackState) = seg.to_point - seg.from_point
 
 
 
@@ -203,3 +207,5 @@ function curvature(seg::TrackTurnState{NumT}, pos) where {NumT}
     )
     return nothing
 end
+
+distance(seg::TrackTurnState) = seg.turn_end - seg.transition_in_start
