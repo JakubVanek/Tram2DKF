@@ -49,6 +49,9 @@ Get the distance travelled during this segment in metres.
 
 Get the duration in seconds that it will take the tram to traverse this segment.
 
+    end_state(segment::ActiveSpeedProfileSegment)::TrajectoryDrive
+
+Return the tram command at the segment end.
 """
 abstract type ActiveSpeedProfileSegment end
 
@@ -98,17 +101,17 @@ of the entire journey.
 Return `nothing` when this segment has ended.
 """
 function drive(stop::StopState{NumT}, time, pos, speed, accel) where {NumT}
-    time < stop.end_at && return TrajectoryDrive{NumT}(
-        speed = zero(NumT),
-        accel = zero(NumT),
-        jerk = zero(NumT)
-    )
+    time < stop.end_at && return end_state(stop)
     return nothing
 end
 
 distance(stop::StopState{NumT}) where {NumT} = zero(NumT)
 duration(stop::StopState) = stop.end_at - stop.start_at
-
+end_state(::StopState{NumT}) where {NumT} = TrajectoryDrive{NumT}(
+    speed = zero(NumT),
+    accel = zero(NumT),
+    jerk = zero(NumT)
+)
 
 
 
@@ -187,7 +190,11 @@ function distance(acc::AccelerateState{NumT}) where {NumT}
     return acc.from_speed * time + 0.5 * acc.acceleration * time^2
 end
 duration(acc::AccelerateState{NumT}) where {NumT} = acc.to_time - acc.from_time
-
+end_state(acc::AccelerateState{NumT}) where {NumT} = TrajectoryDrive{NumT}(
+    speed = acc.to_speed,
+    accel = zero(NumT),
+    jerk = zero(NumT),
+)
 
 
 
@@ -339,6 +346,11 @@ end
 
 duration(acc::SmoothAccelerateState) = acc.time_finish - acc.time_start_rampup
 
+end_state(acc::SmoothAccelerateState{NumT}) where {NumT} = TrajectoryDrive{NumT}(
+    speed = acc.final_speed,
+    accel = zero(NumT),
+    jerk = zero(NumT),
+)
 
 
 
@@ -389,13 +401,14 @@ of the entire journey.
 Return `nothing` when this segment has ended.
 """
 function drive(spd::ConstantSpeedState{NumT}, time, pos, speed, accel) where {NumT}
-    pos < spd.to_point && return TrajectoryDrive{NumT}(
-        speed = spd.speed,
-        accel = zero(NumT),
-        jerk = zero(NumT)
-    )
+    pos < spd.to_point && return end_state(spd)
     return nothing
 end
 
 distance(spd::ConstantSpeedState) = spd.to_point - spd.from_point
 duration(spd::ConstantSpeedState) = abs(distance(spd) / spd.speed)
+end_state(spd::ConstantSpeedState{NumT}) where {NumT} = TrajectoryDrive{NumT}(
+    speed = spd.speed,
+    accel = zero(NumT),
+    jerk = zero(NumT),
+)

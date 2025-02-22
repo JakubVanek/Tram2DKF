@@ -41,6 +41,10 @@ However, it should return zero `position` when the `position` is before the star
     distance(segment::ActiveTrackSegment)::NumT
 
 Returns the length of this segment in metres.
+
+    end_state(segment::ActiveTrackSegment)::TrackCurvature
+
+Return the track geometry at the segment end.
 """
 abstract type ActiveTrackSegment end
 
@@ -95,7 +99,10 @@ function curvature(seg::StraightTrackState{NumT}, pos) where {NumT}
 end
 
 distance(seg::StraightTrackState) = seg.to_point - seg.from_point
-
+end_state(::StraightTrackState{NumT}) where {NumT} = TrackCurvature{NumT}(
+    curvature = zero(NumT),
+    dcurvature = zero(NumT)
+)
 
 
 
@@ -209,3 +216,7 @@ function curvature(seg::TrackTurnState{NumT}, pos) where {NumT}
 end
 
 distance(seg::TrackTurnState) = seg.turn_end - seg.transition_in_start
+end_state(::TrackTurnState{NumT}) where {NumT} = TrackCurvature{NumT}(
+    curvature = zero(NumT),
+    dcurvature = zero(NumT)
+)
