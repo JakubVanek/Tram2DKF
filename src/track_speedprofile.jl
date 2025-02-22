@@ -173,6 +173,144 @@ end
 
 
 
+
+
+
+
+
+# SMOOTH TRAM ACCELERATION
+
+"""
+    SmoothlyAccelerate{NumT}
+
+The tram should accelerate from its current speed to a new
+`to_speed` at a given `acceleration`, while the rate of acceleration
+change is capped by a given `jerk`.
+"""
+@kwdef struct SmoothlyAccelerate{NumT <: Real} <: SpeedProfileSegment
+    to_speed::NumT
+    acceleration::NumT
+    jerk::NumT
+end
+
+"""
+    SmoothAccelerateState{NumT}
+
+Generate ramped speed profile with limited jerk.
+"""
+struct SmoothAccelerateState{NumT <: AbstractFloat} <: ActiveSpeedProfileSegment
+    initial_speed::NumT
+    final_speed::NumT
+    max_accel::NumT
+    initial_jerk::NumT
+
+    time_start_rampup::NumT
+    time_start_steady::NumT
+    time_start_rampdown::NumT
+    time_finish::NumT
+
+    speed_at_steady_start::NumT
+    speed_at_steady_end::NumT
+end
+
+# implementation of the TrackSegment and ActiveTrackSegment interfaces
+
+"""
+    activate(acc::SmoothlyAccelerate, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat}
+
+Return a description of the segment starting from a given tram motion state.
+"""
+function activate(acc::SmoothlyAccelerate, time::NumT, pos, speed, accel) where {NumT <: AbstractFloat}
+    required_speed_delta = abs(acc.to_speed - speed)
+    time_to_max_accel = abs(acc.acceleration / acc.jerk)
+    speed_delta_in_jerk = abs(time_to_max_accel * acc.acceleration)
+
+    if speed_delta_in_jerk < required_speed_delta
+        # there is a constant-acceleration segment
+        remaining_delta = required_speed_delta - speed_delta_in_jerk
+        time_for_remaining = remaining_delta / abs(acc.acceleration)
+        true_accel = copysign(acc.acceleration, acc.to_speed - speed)
+
+        return SmoothAccelerateState{NumT}(
+            speed,
+            acc.to_speed,
+            true_accel,
+            copysign(acc.jerk, true_accel),
+
+            time,
+            time + time_to_max_accel,
+            time + time_to_max_accel + time_for_remaining,
+            time + 2*time_to_max_accel + time_for_remaining,
+
+            speed + true_accel * time_to_max_accel / 2,
+            speed + true_accel * (time_to_max_accel / 2 + time_for_remaining)
+        )
+    else
+        # there are only the ramp parts
+        max_accel = sqrt(abs(acc.jerk * required_speed_delta))
+        slope_time = abs(max_accel / acc.jerk)
+        true_accel = copysign(max_accel, acc.to_speed - speed)
+
+        return SmoothAccelerateState{NumT}(
+            speed,
+            acc.to_speed,
+            true_accel,
+            copysign(acc.jerk, true_accel),
+
+            time,
+            time + slope_time,
+            time + slope_time,
+            time + 2*slope_time,
+
+            speed + true_accel * slope_time / 2,
+            speed + true_accel * slope_time / 2
+        )
+    end
+end
+
+"""
+    drive(acc::SmoothAccelerateState{NumT}, time, pos, speed, accel) where {NumT}
+
+Return the speed and acceleration at the given point on the
+speed profile. The `position` and `time` values are **not**
+relative wrt. the segment start, they are relative to the start
+of the entire journey.
+
+Return `nothing` when this segment has ended.
+"""
+function drive(acc::SmoothAccelerateState{NumT}, time, pos, speed, accel) where {NumT}
+    time < acc.time_start_rampup && return TrajectoryDrive{NumT}(
+        speed = acc.initial_jerk,
+        accel = 0.0,
+        jerk  = 0.0
+    )
+    time < acc.time_start_steady && return TrajectoryDrive{NumT}(
+        speed = acc.initial_speed + 0.5*acc.initial_jerk * (time - acc.time_start_rampup)^2,
+        accel = lerp(acc.time_start_rampup, 0, acc.time_start_steady, acc.max_accel, time),
+        jerk  = acc.initial_jerk
+    )
+    time < acc.time_start_rampdown && return TrajectoryDrive{NumT}(
+        speed = acc.speed_at_steady_start + acc.max_accel * (time - acc.time_start_steady),
+        accel = acc.max_accel,
+        jerk = 0.0
+    )
+    time < acc.time_finish && return TrajectoryDrive{NumT}(
+        speed = acc.speed_at_steady_end
+                + acc.max_accel * (time - acc.time_start_rampdown)
+                - 0.5 * acc.initial_jerk * (time - acc.time_start_rampdown)^2,
+        accel = lerp(acc.time_start_rampdown, acc.max_accel, acc.time_finish, 0, time),
+        jerk = -acc.initial_jerk
+    )
+    return nothing
+end
+
+
+
+
+
+
+
+
 # TRAM COASTING
 
 """

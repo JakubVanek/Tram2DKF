@@ -24,7 +24,7 @@ export KalmanFilter, LinearKalmanFilter, ExtendedKalmanFilter, IteratedExtendedK
 export forward_step, backward_step, data_step
 export IdentityStepping, BacktrackingLineSearch
 export TrackSegment, StraightTrack, TrackTurn
-export SpeedProfileSegment, Stop, Accelerate, ConstantSpeed
+export SpeedProfileSegment, Stop, Accelerate, ConstantSpeed, SmoothlyAccelerate
 export render_trip
 export simulate_accelerometer, simulate_gyro, simulate_gnss, simulate_odometry
 

@@ -243,6 +243,7 @@ function inner_generator_loop!(gen::GeneratorState, track::ActiveTrackSegment, s
         gen.current_state[IDX_DCURVATURE] = geometry.dcurvature
         gen.current_state[IDX_SPEED] = speed_command.speed
         gen.current_state[IDX_ACCELERATION] = speed_command.accel
+        gen.current_state[IDX_JERK] = speed_command.jerk
 
         # simulate system evolution till next keyframe
         gen.current_state = gen.tram_model(gen.current_state, [])
