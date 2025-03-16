@@ -152,6 +152,47 @@ end
 zero(g::SqrtGaussian) = SqrtGaussian(zero(g.x), zero(g.L))
 
 
+
+
+
+
+
+
+
+struct GaussianMixture{LT,PT} <: UncertainValue
+    parts::LT
+    weights::PT
+end
+
+mean(gm::GaussianMixture) = sum(
+    weight * mean(part)
+    for (part, weight)
+    in zip(gm.parts, gm.weights)
+)
+covariance(gm::GaussianMixture) = covariance(gm, mean(gm))
+covariance(gm::GaussianMixture, mixture_mean) = sum(
+    weight * (covariance(part) + dyad(mean(part) - mixture_mean))
+    for (part, weight)
+    in zip(gm.parts, gm.weights)
+)
+dyad(x) = x*x'
+pdf(gm::GaussianMixture, value) = sum(weight * pdf(part, value) for (part, weight) in zip(gm.parts, gm.weights))
+logpdf(gm::GaussianMixture, value) = log(pdf(gm, value))
+
+function Gaussian(gm::GaussianMixture)
+    mixture_mean = mean(gm)
+    mixture_cov = covariance(gm, mixture_mean)
+    Gaussian(mixture_mean, mixture_cov)
+end
+
+
+
+
+
+
+
+
+
 """
     KalmanFilter
 
