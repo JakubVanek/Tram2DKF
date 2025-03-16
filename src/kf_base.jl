@@ -85,6 +85,7 @@ function logpdf(g::Gaussian, value)
     -d/2*log(2*pi) -1/2*logdet(g.P) + exponent
 end
 
+zero(g::Gaussian) = Gaussian(zero(g.x), zero(g.P))
 
 """
     SqrtGaussian
@@ -147,6 +148,8 @@ function logpdf(g::SqrtGaussian, value)
     exponent = -1/2 * sum(deskewed_offset.^2)
     -d/2*log(2*pi) -logdet(g.L) + exponent
 end
+
+zero(g::SqrtGaussian) = SqrtGaussian(zero(g.x), zero(g.L))
 
 
 """
