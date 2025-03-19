@@ -88,7 +88,7 @@ function data_step(iekf::IteratedExtendedKalmanFilter,
     input,
     observation::UncertainValue)
 
-    current_estimate = mean(prior)
+    current_estimate = copy(mean(prior))
     ad_g = JacobianResult(mean(observation), current_estimate)
 
     for _ in 1:iekf.max_iekf_iters
