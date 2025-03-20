@@ -1,7 +1,8 @@
 # struct SpinnyIntegrator reused from EKF tests
 # struct PowerMeasurement reused from EKF tests
+using Tram2DKF: AlwaysFeasible
 
-IEKF = IteratedExtendedKalmanFilter(BacktrackingLineSearch(0.1, 0.5, 20), 1e-6, 20)
+IEKF = IteratedExtendedKalmanFilter(BacktrackingLineSearch(0.1, 0.5, 20, AlwaysFeasible), 1e-6, 20)
 
 @testset "IEKF time step" begin
     # the same as for EKF

@@ -1,3 +1,5 @@
+using Tram2DKF: AlwaysFeasible
+
 @testset "Identity stepper" begin
     linear_fn(x) = 2*x
 
@@ -12,7 +14,7 @@ end
     linear_fn(x) = 2*x
     quadratic_fn(x) = x^2
 
-    stepper = BacktrackingLineSearch(0.1, 0.5, 20)
+    stepper = BacktrackingLineSearch(0.1, 0.5, 20, AlwaysFeasible)
 
     # minimizing direction -> use directly
     @test stepper(linear_fn, 0, -1) == -1
