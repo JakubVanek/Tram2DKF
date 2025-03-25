@@ -49,7 +49,7 @@ function backward_step(::LinearKalmanFilter,
     next_prior::UncertainValue,
     next_smoothed::UncertainValue)
 
-    F = covariance(current_posterior) * model.A' / covariance(next_smoothed)
+    F = covariance(current_posterior) * model.A' / covariance(next_prior)
 
     new_x = mean(current_posterior) + F * (mean(next_smoothed) - mean(next_prior))
     new_Pxx = covariance(current_posterior) - F * (covariance(next_prior) - covariance(next_smoothed)) * F'
