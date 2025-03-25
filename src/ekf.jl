@@ -77,3 +77,26 @@ function data_step(::ExtendedKalmanFilter,
         observation
     )
 end
+
+function backward_step(::ExtendedKalmanFilter,
+    f::StateEquation{DiscreteTime},
+    current_posterior::UncertainValue,
+    next_prior::UncertainValue,
+    next_smoothed::UncertainValue,
+    input)
+
+    # Extended RTS as per https://users.aalto.fi/~ssarkka/course_k2011/pdf/handout7.pdf
+
+    x = mean(current_posterior)
+    u = input
+
+    ad_f = JacobianResult(x)
+    jacobian!(ad_f, (x_) -> f(x_, u), x)
+
+    return direct_backward_step(
+        jacobian(ad_f),
+        current_posterior,
+        next_prior,
+        next_smoothed
+    )
+end

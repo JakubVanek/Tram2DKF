@@ -43,18 +43,11 @@ Perform a smoothing step of a linear Rauch-Tung-Striebel smoother.
 This allows you to propagate information from new measurements back in time
 and make the estimates of past states less noisy.
 """
-function backward_step(::LinearKalmanFilter,
+backward_step(::LinearKalmanFilter,
     model::LTIStateEquation{DiscreteTime},
     current_posterior::UncertainValue,
     next_prior::UncertainValue,
-    next_smoothed::UncertainValue)
-
-    F = covariance(current_posterior) * model.A' / covariance(next_prior)
-
-    new_x = mean(current_posterior) + F * (mean(next_smoothed) - mean(next_prior))
-    new_Pxx = covariance(current_posterior) - F * (covariance(next_prior) - covariance(next_smoothed)) * F'
-    Gaussian(new_x, new_Pxx)
-end
+    next_smoothed::UncertainValue) = direct_backward_step(model.A, current_posterior, next_prior, next_smoothed)
 
 """
     data_step(::LinearKalmanFilter,
@@ -206,6 +199,19 @@ function innovation_data_step(
     posterior_x = prior.x + almost_K * (LowerTriangular(posterior_Ly) \ innovation)
 
     SqrtGaussian(posterior_x, LowerTriangular(posterior_Lx))
+end
+
+function direct_backward_step(
+    jac_F_at_current_posterior,
+    current_posterior::UncertainValue,
+    next_prior::UncertainValue,
+    next_smoothed::UncertainValue)
+
+    F = covariance(current_posterior) * jac_F_at_current_posterior' / covariance(next_prior)
+
+    new_x = mean(current_posterior) + F * (mean(next_smoothed) - mean(next_prior))
+    new_Pxx = covariance(current_posterior) - F * (covariance(next_prior) - covariance(next_smoothed)) * F'
+    Gaussian(new_x, new_Pxx)
 end
 
 # TODO: maybe http://kth.diva-portal.org/smash/get/diva2:808731/FULLTEXT01.pdf and low-rank updates
