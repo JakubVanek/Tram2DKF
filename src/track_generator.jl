@@ -169,7 +169,8 @@ The simulation will return one sample for every `dt` seconds elapsed.
 However, the ODE can be invoked more frequently that that in order to
 increase accuracy. To do so, provide a `subsamples` value greater than 1.
 
-The state trajectory is returned as a vector of (state) vectors.
+The state trajectory is returned as a vector of (state) vectors. The components
+of the state vector can be accessed using helper constants, e.g. vector[IDX_SPEED].
 """
 function render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1)
     ct_model = TramMotionModel()

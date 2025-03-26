@@ -118,6 +118,9 @@ odo  = simulate_odometry(states, 0.01)
 gnss = simulate_gnss(states, 200, I(3))
 ```
 
+The state vector has a predefined set of components, see [IDX_TIME](@ref)
+and other constants.
+
 ## Demo scripts
 
 There are three example scripts available:
