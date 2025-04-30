@@ -160,10 +160,11 @@ end
 
 
 """
-    render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1)
+    render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1, state0::Vector{Float64} = zeros(Float64, nstates(ct_model)))
 
 Simulate a state-space trajectory of a tram going along `track_segments`
-and following a speed profile composed of `speed_segments`.
+and following a speed profile composed of `speed_segments`. Assume that
+the trajectory starts with state `state0`.
 
 The simulation will return one sample for every `dt` seconds elapsed.
 However, the ODE can be invoked more frequently that that in order to
@@ -172,13 +173,13 @@ increase accuracy. To do so, provide a `subsamples` value greater than 1.
 The state trajectory is returned as a vector of (state) vectors. The components
 of the state vector can be accessed using helper constants, e.g. vector[IDX_SPEED].
 """
-function render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1)
+function render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1, state0::Vector{Float64} = zeros(Float64, nstates(ct_model)))
     ct_model = TramMotionModel()
 
     gen = GeneratorState(
         discretize(ct_model, RK4, dt / subsamples),
         Vector{Vector{Float64}}(),
-        zeros(Float64, nstates(ct_model)),
+        copy(state0),
         1,
         dt,
         subsamples
@@ -208,7 +209,6 @@ function render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segme
 
     return gen.states
 end
-
 
 """
     inner_generator_loop!(gen::GeneratorState, track::ActiveTrackSegment, speed_profile::ActiveSpeedProfileSegment)
