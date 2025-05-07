@@ -173,7 +173,7 @@ increase accuracy. To do so, provide a `subsamples` value greater than 1.
 The state trajectory is returned as a vector of (state) vectors. The components
 of the state vector can be accessed using helper constants, e.g. vector[IDX_SPEED].
 """
-function render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1, state0::Vector{Float64} = zeros(Float64, nstates(ct_model)))
+function render_trip(track_segments::AbstractVector{<:TrackSegment}, speed_segments::AbstractVector{<:SpeedProfileSegment}, dt::Float64, subsamples::Int = 1, state0::Vector{Float64} = zeros(Float64, 10))
     ct_model = TramMotionModel()
 
     gen = GeneratorState(
